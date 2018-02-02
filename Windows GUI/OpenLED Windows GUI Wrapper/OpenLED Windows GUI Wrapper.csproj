@@ -94,7 +94,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OpenLED Windows Host\OpenLED Windows Host.csproj">
+    <ProjectReference Include="..\..\OpenLED Windows Host\OpenLED Windows Host.csproj">
       <Project>{26b56151-965a-4a6c-81cb-11833448b299}</Project>
       <Name>OpenLED Windows Host</Name>
     </ProjectReference>
