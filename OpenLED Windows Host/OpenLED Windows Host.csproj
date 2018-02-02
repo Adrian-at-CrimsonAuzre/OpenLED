@@ -51,12 +51,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Sound Library\Sound Library.csproj">
-      <Project>{9a0d5f64-c031-48db-80e0-e7ed069f0e1a}</Project>
-      <Name>Sound Library</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
