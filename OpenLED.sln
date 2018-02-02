@@ -18,10 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Arduino", "Arduino", "{19D4
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Arduino Client", "Arduino\Arduino Client\Arduino Client.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arduino Host", "Arduino\Arduino Host\Arduino Host.csproj", "{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}"
-	ProjectSection(ProjectDependencies) = postProject
-		{C5F80730-F44F-4478-BDAE-6634EFC2CA88} = {C5F80730-F44F-4478-BDAE-6634EFC2CA88}
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arduino Host", "Arduino Host\Arduino Host.csproj", "{5D335D51-C8C2-4433-968A-E2799FD4E9C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,21 +58,21 @@ Global
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|Any CPU.ActiveCfg = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}.Debug|x86.Build.0 = Debug|Any CPU
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}.Release|x86.ActiveCfg = Release|Any CPU
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB}.Release|x86.Build.0 = Release|Any CPU
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5}.Debug|x86.Build.0 = Debug|Any CPU
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5}.Release|x86.ActiveCfg = Release|Any CPU
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88} = {19D41B8D-2B6C-4120-9439-B8E99D6DE90B}
-		{DAF6E43D-A7DB-4633-A236-6EE09E6781BB} = {19D41B8D-2B6C-4120-9439-B8E99D6DE90B}
+		{5D335D51-C8C2-4433-968A-E2799FD4E9C5} = {19D41B8D-2B6C-4120-9439-B8E99D6DE90B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9949720A-3D60-4D51-8B2D-FB213647D5E7}

@@ -3,10 +3,10 @@
 #define DATA_PIN 2
 
 CRGB leds[NUM_LEDS];
-
+//TODO: Better Arduino communication
 void setup()
 {
-	Serial.begin(2000000);
+	Serial.begin(115200);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
 }
 
