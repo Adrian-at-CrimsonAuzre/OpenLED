@@ -8,15 +8,15 @@
 		mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
 	<svl:Spectrum
-					BarCount="370"
+					BarCount="500"
 					BarVisibility="Visible"
 							
 					MinimumFrequency="0"
-					MaximumFrequency="44100"
+					MaximumFrequency="2000"
 							
 					ThresholdWindow="3"
 					ThresholdThreshold="0.1"
 					ThresholdInfluence=".5"
 							
-					BlendedFrames="10"/>
+					BlendedFrames="5"/>
 </Window>

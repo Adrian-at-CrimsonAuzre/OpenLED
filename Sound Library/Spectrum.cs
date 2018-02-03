@@ -31,7 +31,6 @@ namespace Sound_Library
 		private int maximumFrequencyIndex = (int)BassEngine.Instance.FFT - 1;
 		private int minimumFrequencyIndex;
 		private int[] barIndexMax;
-		private int[] barLogScaleIndexMax;
 		#endregion
 
 		#region Constants
@@ -953,23 +952,7 @@ namespace Sound_Library
 
 			if (allZero && !BassEngine.Instance.IsPlaying)
 				animationTimer.Stop();
-		}
-
-		private double CalculatePercentile(double[] sequence, double excelPercentile)
-		{
-			Array.Sort(sequence);
-			int N = sequence.Length;
-			double n = (N - 1) * excelPercentile + 1;
-			// Another method: double n = (N + 1) * excelPercentile;
-			if (n == 1d) return sequence[0];
-			else if (n == N) return sequence[N - 1];
-			else
-			{
-				int k = (int)n;
-				double d = n - k;
-				return sequence[k - 1] + d * (sequence[k] - sequence[k - 1]);
-			}
-		}
+		}		
 
 		private List<int> ThresholdDetection(List<double> y)
 		{
@@ -1056,8 +1039,8 @@ namespace Sound_Library
 				return;
 
 			barWidth = Math.Max(((double)(spectrumCanvas.RenderSize.Width) / (double)BarCount), 1);
-			maximumFrequencyIndex = Math.Min(BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency) + 1, 2047);
-			minimumFrequencyIndex = Math.Min(BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency), 2047);
+			maximumFrequencyIndex = BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency);
+			minimumFrequencyIndex = BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
 			bandWidth = Math.Max(((double)(maximumFrequencyIndex - minimumFrequencyIndex)) / spectrumCanvas.RenderSize.Width, 1.0);
 
 			int actualBarCount;
@@ -1069,18 +1052,12 @@ namespace Sound_Library
 			int indexCount = maximumFrequencyIndex - minimumFrequencyIndex;
 			int linearIndexBucketSize = (int)Math.Round((double)indexCount / (double)actualBarCount, 0);
 			List<int> maxIndexList = new List<int>();
-			List<int> maxLogScaleIndexList = new List<int>();
-			double maxLog = Math.Log(actualBarCount, actualBarCount);
+
 			for (int i = 1; i < actualBarCount; i++)
-			{
 				maxIndexList.Add(minimumFrequencyIndex + (i * linearIndexBucketSize));
-				int logIndex = (int)((maxLog - Math.Log((actualBarCount + 1) - i, (actualBarCount + 1))) * indexCount) + minimumFrequencyIndex;
-				maxLogScaleIndexList.Add(logIndex);
-			}
+
 			maxIndexList.Add(maximumFrequencyIndex);
-			maxLogScaleIndexList.Add(maximumFrequencyIndex);
 			barIndexMax = maxIndexList.ToArray();
-			barLogScaleIndexMax = maxLogScaleIndexList.ToArray();
 
 			barHeights = new double[actualBarCount];
 

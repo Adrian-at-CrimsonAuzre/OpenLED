@@ -8,14 +8,46 @@ using Un4seen.BassWasapi;
 
 namespace Sound_Library
 {
-    public class BassEngine
+    public class BassEngine : OpenLED_Windows_Host.NotifyBase
     {
         #region Fields
-        private static BassEngine instance;
 		public readonly FFTSize FFT = FFTSize.FFT32768;
+
+		private static BassEngine _Instance;
+		/// <summary>
+		/// Application wide Bass Instance
+		/// </summary>
+		public static BassEngine Instance
+		{
+			get
+			{
+				if (_Instance == null)
+					Instance = new BassEngine();
+				return _Instance;
+			}
+			private set
+			{
+				_Instance = value;
+			}
+		}
+
+
+		private bool _IsPlaying;
+		/// <summary>
+		/// Is there audio playing?
+		/// </summary>
+		public bool IsPlaying
+		{
+			get { return _IsPlaying; }
+			set
+			{
+				_IsPlaying = value;
+				NotifyPropertyChanged();
+			}
+		}
+
 		#endregion
 
-		#region Constructor
 		private BassEngine()
         {
 			//Setup Bass bullshit
@@ -26,14 +58,52 @@ namespace Sound_Library
 			BassWasapi.LoadMe();
 
 
-			Initialize();
-        }
-        #endregion
+			if (!Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_SPEAKERS, (new WindowInteropHelper(Application.Current.MainWindow)).Handle))
+			{
+				MessageBox.Show(Application.Current.MainWindow, "Bass initialization error!");
+				Application.Current.MainWindow.Close();
+			}
 
-        #region ISpectrumPlayer
-        public int GetFFTFrequencyIndex(int frequency)
+			#region WASAPI
+			int WASAPIDeviceIndex = -100;
+
+			var devices = BassWasapi.BASS_WASAPI_GetDeviceInfos();
+			for (int i = 0; i < devices.Length; i++)
+				if (devices[i].IsEnabled && devices[i].SupportsRecording && devices[i].IsLoopback)
+				{
+					WASAPIDeviceIndex = i;
+					break;
+				}
+			if (WASAPIDeviceIndex != -100)
+			{
+				BASS_WASAPI_DEVICEINFO devInfo = devices[WASAPIDeviceIndex];
+
+				if (devInfo.IsInitialized)
+				{
+					Console.WriteLine("Deinitializing WASAPI device");
+					BassWasapi.BASS_WASAPI_Stop(true);
+					BassWasapi.BASS_WASAPI_Free();
+				}
+
+				if (!BassWasapi.BASS_WASAPI_Init(WASAPIDeviceIndex, devInfo.mixfreq, devInfo.mixchans, BASSWASAPIInit.BASS_WASAPI_AUTOFORMAT | BASSWASAPIInit.BASS_WASAPI_BUFFER, 0f, 0f, new WASAPIPROC(delegate (IntPtr buffer, int length, IntPtr user) { return 1; }), IntPtr.Zero))
+				{
+					BASSError error = Bass.BASS_ErrorGetCode();
+				}
+				if (!BassWasapi.BASS_WASAPI_Start())
+				{
+					BASSError error = Bass.BASS_ErrorGetCode();
+				}
+
+				IsPlaying = true;
+			}
+			else
+				IsPlaying = false;
+			#endregion WASAPI
+		}
+		
+		public int GetFFTFrequencyIndex(int frequency)
         {
-            return Utils.FFTFrequency2Index(frequency, (int)FFT, 44100);
+			return Utils.FFTFrequency2Index(frequency, (int)FFT, 44100);
         }
 
         public bool GetFFTData(float[] fftDataBuffer)
@@ -139,97 +209,6 @@ namespace Sound_Library
 					Y[i] /= n;
 				}
 			}
-		}
-		#endregion
-		
-        #region INotifyPropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void NotifyPropertyChanged(String info)
-        {
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(info));
-		}
-        #endregion
-
-        #region Singleton Instance
-        public static BassEngine Instance
-        {
-            get
-            {
-                if (instance == null)
-                    instance = new BassEngine();
-                return instance;
-            }
-        }
-		#endregion
-
-		private WASAPIPROC WasapiProc = new WASAPIPROC(IgnoreDataProc);
-		private static int IgnoreDataProc(IntPtr buffer, int length, IntPtr user) { return 1; }
-		private void Initialize()
-        {
-            if (Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_SPEAKERS, (new WindowInteropHelper(Application.Current.MainWindow)).Handle))
-            {
-#if DEBUG
-                BASS_INFO info = new BASS_INFO();
-                Bass.BASS_GetInfo(info);
-                Debug.WriteLine(info.ToString());
-#endif
-            }
-            else
-            {
-                MessageBox.Show(Application.Current.MainWindow, "Bass initialization error!");
-				Application.Current.MainWindow.Close();
-            }
-
-
-			#region WASAPI
-			int WASAPIDeviceIndex = -100;
-
-			var devices = BassWasapi.BASS_WASAPI_GetDeviceInfos();
-			for (int i = 0; i < devices.Length; i++)
-				if (devices[i].IsEnabled && devices[i].SupportsRecording && devices[i].IsLoopback)
-				{
-					WASAPIDeviceIndex = i;
-					break;
-				}
-			if (WASAPIDeviceIndex != -100)
-			{
-				BASS_WASAPI_DEVICEINFO devInfo = devices[WASAPIDeviceIndex];
-
-				if (devInfo.IsInitialized)
-				{
-					Console.WriteLine("Deinitializing WASAPI device");
-					BassWasapi.BASS_WASAPI_Stop(true);
-					BassWasapi.BASS_WASAPI_Free();
-				}
-
-				if (!BassWasapi.BASS_WASAPI_Init(WASAPIDeviceIndex, devInfo.mixfreq, devInfo.mixchans, BASSWASAPIInit.BASS_WASAPI_AUTOFORMAT | BASSWASAPIInit.BASS_WASAPI_BUFFER, 0f, 0f, WasapiProc, IntPtr.Zero))
-				{
-					BASSError error = Bass.BASS_ErrorGetCode();
-				}
-				if (!BassWasapi.BASS_WASAPI_Start())
-				{
-					BASSError error = Bass.BASS_ErrorGetCode();
-				}
-
-				IsPlaying = true;
-			}
-			else
-				IsPlaying = false;
-			#endregion WASAPI
-		}
-
-		private bool isPlaying;
-		public bool IsPlaying
-        {
-            get { return isPlaying; }
-            protected set
-            {
-                bool oldValue = isPlaying;
-                isPlaying = value;
-                if (oldValue != isPlaying)
-                    NotifyPropertyChanged("IsPlaying");
-            }
-        }
+		}	
     }
 }
