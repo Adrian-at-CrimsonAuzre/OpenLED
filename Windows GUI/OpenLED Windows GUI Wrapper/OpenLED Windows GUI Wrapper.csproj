@@ -54,6 +54,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="ExpressionDark.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -97,6 +101,10 @@
     <ProjectReference Include="..\..\OpenLED Windows Host\OpenLED Windows Host.csproj">
       <Project>{26b56151-965a-4a6c-81cb-11833448b299}</Project>
       <Name>OpenLED Windows Host</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Sound Library\SoundLibrary.csproj">
+      <Project>{be98d934-049b-4151-869c-0ba921325fff}</Project>
+      <Name>SoundLibrary</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

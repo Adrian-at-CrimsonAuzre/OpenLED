@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Sound_Library
 {
-	public enum FTTSize
+	public enum FFTSize
 	{
 		/// <summary>
 		/// A 256 point FFT. Real data will be 128 floating point values.

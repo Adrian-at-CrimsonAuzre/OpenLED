@@ -4,9 +4,19 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenLED_Windows_GUI_Wrapper"
-        mc:Ignorable="d"
+        xmlns:svl="clr-namespace:Sound_Library;assembly=Sound_Library"
+		mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
-    <Grid>
-        
-    </Grid>
+	<svl:Spectrum
+					BarCount="370"
+					BarVisibility="Visible"
+							
+					MinimumFrequency="0"
+					MaximumFrequency="44100"
+							
+					ThresholdWindow="3"
+					ThresholdThreshold="0.1"
+					ThresholdInfluence=".5"
+							
+					BlendedFrames="10"/>
 </Window>

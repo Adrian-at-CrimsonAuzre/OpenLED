@@ -23,6 +23,10 @@ namespace OpenLED_Windows_GUI_Wrapper
 		public MainWindow()
 		{
 			InitializeComponent();
+
+			Resources.MergedDictionaries.Clear();
+			ResourceDictionary themeResources = Application.LoadComponent(new Uri("ExpressionDark.xaml", UriKind.Relative)) as ResourceDictionary;
+			Resources.MergedDictionaries.Add(themeResources);
 		}
 	}
 }

@@ -22,7 +22,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenLED Windows GUI Wrapper
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Visualizer Library", "Windows GUI\Visualizer Library\Visualizer Library.csproj", "{C674D376-2970-4DD3-8E96-8AF4AADEAAEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sound Library", "Sound Library\Sound Library.csproj", "{BE98D934-049B-4151-869C-0BA921325FFF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoundLibrary", "Sound Library\SoundLibrary.csproj", "{BE98D934-049B-4151-869C-0BA921325FFF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
