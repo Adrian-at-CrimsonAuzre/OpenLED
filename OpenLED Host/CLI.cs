@@ -10,8 +10,36 @@ namespace OpenLED_Host
 {
 	class CLI
 	{
+		private static bool _IsConsoleOpen = false;
+		/// <summary>
+		/// Opens and Closes the Console.
+		/// NOTE: If the Console is CLOSED rather than turned off, the application will close
+		/// </summary>
+		public static bool IsConsoleOpen
+		{
+			get { return _IsConsoleOpen; }
+			set
+			{
+				_IsConsoleOpen = value;
+
+				if (IsConsoleOpen)
+				{
+					ConsoleAllocator.ShowConsoleWindow();
+					Console.WriteLine(DateTime.Now + "\tConsole Opened");
+				}
+				else
+				{
+					Console.WriteLine(DateTime.Now + "\tConsole Closed");
+					ConsoleAllocator.HideConsoleWindow();
+				}
+			}
+		}
+
 		public CLI(string[] args)
 		{
+			VolumeAndPitchReactive t = new VolumeAndPitchReactive();
+			IsConsoleOpen = true;
+
 			bool helpshown = false;
 			LEDModes ledmode = LEDModes.NULL;
 			OptionSet options = new OptionSet
@@ -51,7 +79,8 @@ namespace OpenLED_Host
 					{
 						case (LEDModes.VolumeAndPitchReactive):
 							{
-								//TODO: make this work
+								t.StartReacting();
+								while (true) ;
 								break;
 							}
 						case (LEDModes.SingleColor):
@@ -59,8 +88,6 @@ namespace OpenLED_Host
 								break;
 							}
 					}
-
-					Console.WriteLine();
 				}
 				else
 					options.WriteOptionDescriptions(Console.Out);

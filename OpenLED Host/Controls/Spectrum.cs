@@ -23,18 +23,13 @@ namespace OpenLED_Host.Controls
 		#region Fields
 		private readonly DispatcherTimer animationTimer;
 		private Canvas spectrumCanvas;
-		private double[] barHeights;
-		private float[] channelData = new float[(int)Sound_Library.BassEngine.Instance.FFT];
-		private double bandWidth = 1.0;
 		private double barWidth = 1;
-		private int maximumFrequencyIndex = (int)Sound_Library.BassEngine.Instance.FFT - 1;
-		private int minimumFrequencyIndex;
-		private int[] barIndexMax;
+		private int BarCount;
 		LEDModeDrivers.VolumeAndPitchReactive VolumeAndPitch = new LEDModeDrivers.VolumeAndPitchReactive();
 		#endregion
 
 		#region Constants
-		private const int scaleFactorLinear = 22;
+		private const int scaleFactorLinear = 5;
 		private const int defaultUpdateInterval = 0;
 		#endregion
 
@@ -167,70 +162,7 @@ namespace OpenLED_Host.Controls
 		}
 
 		#endregion
-
-		#region BarCount
-		/// <summary>
-		/// Identifies the <see cref="BarCount" /> dependency property. 
-		/// </summary>
-		public static readonly DependencyProperty BarCountProperty = DependencyProperty.Register("BarCount", typeof(int), typeof(Spectrum), new UIPropertyMetadata(32, OnBarCountChanged, OnCoerceBarCount));
-
-		private static object OnCoerceBarCount(DependencyObject o, object value)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				return spectrum.OnCoerceBarCount((int)value);
-			else
-				return value;
-		}
-
-		private static void OnBarCountChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				spectrum.OnBarCountChanged((int)e.OldValue, (int)e.NewValue);
-		}
-
-		/// <summary>
-		/// Coerces the value of <see cref="BarCount"/> when a new value is applied.
-		/// </summary>
-		/// <param name="value">The value that was set on <see cref="BarCount"/></param>
-		/// <returns>The adjusted value of <see cref="BarCount"/></returns>
-		protected virtual int OnCoerceBarCount(int value)
-		{
-			value = Math.Max(value, 1);
-			return value;
-		}
-
-		/// <summary>
-		/// Called after the <see cref="BarCount"/> value has changed.
-		/// </summary>
-		/// <param name="oldValue">The previous value of <see cref="BarCount"/></param>
-		/// <param name="newValue">The new value of <see cref="BarCount"/></param>
-		protected virtual void OnBarCountChanged(int oldValue, int newValue)
-		{
-			UpdateBarLayout();
-		}
-
-		/// <summary>
-		/// Gets or sets the number of bars to show on the sprectrum analyzer.
-		/// </summary>
-		/// <remarks>A bar's width can be a minimum of 1 pixel. If the BarSpacing and BarCount property result
-		/// in the bars being wider than the chart itself, the BarCount will automatically scale down.</remarks>
-		[Category("Common")]
-		public int BarCount
-		{
-			// IMPORTANT: To maintain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
-			get
-			{
-				return (int)GetValue(BarCountProperty);
-			}
-			set
-			{
-				SetValue(BarCountProperty, value);
-			}
-		}
-		#endregion
-
+		
 		#region BarVisibility
 		/// <summary>
 		/// Identifies the <see cref="BarVisibility" /> dependency property. 
@@ -805,7 +737,7 @@ namespace OpenLED_Host.Controls
 			if (spectrumCanvas == null || spectrumCanvas.RenderSize.Width < 1 || spectrumCanvas.RenderSize.Height < 1)
 				return;
 
-			if (Sound_Library.BassEngine.Instance.IsPlaying && !Sound_Library.BassEngine.Instance.GetFFTData(channelData))
+			if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				return;
 
 			UpdateSpectrumShapes();
@@ -828,147 +760,61 @@ namespace OpenLED_Host.Controls
 		private void UpdateSpectrumShapes()
 		{
 			framesSinceLastFPSTick++;
-			
-			double CanvasHeight = spectrumCanvas.RenderSize.Height;
-			int barIndex = 0;
-			int barittercount = 0;
-			bool allzeros = true;
-			List<(double v, int index)> VolumeAndIndex = new List<(double h, int index)>();
 
-			for (int i = minimumFrequencyIndex; i <= maximumFrequencyIndex; i++)
+			HSLColor Background = new HSLColor();
+			List<(double v, int p)> VolumeAndPeaks = VolumeAndPitch.GenerateColorData(out Background);
+
+			//If nothing is playing, then don't update
+			if (Background != new HSLColor(0, 0, 0))
 			{
-				//They need reset evert loop anyways
-				double fftBucketHeight = 0f;
-				double barHeight = 0f;
-
-				if (channelData[i] != 0)
-					allzeros = false;
-				// If we're paused, keep drawing, but set the current height to 0 so the peaks fall.
-				if (!Sound_Library.BassEngine.Instance.IsPlaying)
+				for (int i = 0; i < BarCount; i++)
 				{
-					barHeight = 0f;
-				}
-				else // Draw the maximum value for the bar's band
-				{
-					fftBucketHeight = (channelData[i] * scaleFactorLinear) * CanvasHeight;
-
-					if (barHeight < fftBucketHeight)
-						barHeight = fftBucketHeight;
-					if (barHeight < 0f)
-						barHeight = 0f;
-				}
-
-				// If this is the last FFT bucket in the bar's group, draw the bar.
-				if (i == barIndexMax[barIndex])
-				{
-					barittercount++;
-
-					// Peaks can't surpass the height of the control.
-					if (barHeight > CanvasHeight)
-						barHeight = CanvasHeight;
+					double barHeight = VolumeAndPeaks[i].v * spectrumCanvas.RenderSize.Height;
 					
+					((Rectangle)spectrumCanvas.Children[i]).Margin = new Thickness((barWidth * i) + 1, (spectrumCanvas.RenderSize.Height - 1) - barHeight, 0, 0);
+					((Rectangle)spectrumCanvas.Children[i]).Height = barHeight;
 
-					double xCoord = (barWidth * barIndex) + 1;
-
-					((Rectangle)spectrumCanvas.Children[barIndex]).Margin = new Thickness(xCoord, (CanvasHeight - 1) - barHeight, 0, 0);
-					((Rectangle)spectrumCanvas.Children[barIndex]).Height = barHeight;
-
-
-					//Color Calc
-					System.Drawing.Color RGB = new HSLColor(((double)barittercount) / BarCount, 1, barHeight / CanvasHeight);
-					((Rectangle)spectrumCanvas.Children[barIndex]).Fill = new SolidColorBrush(Color.FromRgb(RGB.R, RGB.G, RGB.B));
-
-					//This is used later for calculating colors and positions
-					VolumeAndIndex.Add((barHeight / CanvasHeight, barittercount));
-
-					barIndex++;
-				}
-			}
-			
-			//If all the data was zeros, then don't update
-			if(!allzeros)
-			{
-				List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumeAndIndex.Select(x => x.v).ToList());
-
-				//Clear alll the rectangle thicknesses so we can show the new bars
-				foreach (var rt in spectrumCanvas.Children)
-					if (rt is Rectangle r)
-						r.StrokeThickness = 0;
-
-				//Add white border to the peaks on the UI, to show what's being used in the color calculation.
-				//Was originally for diagnostic, but it looks neat.
-				for (int i = 0; i < Peaks.Count; i++)
-					if (Peaks[i] > 0)
-					{
-						((Rectangle)spectrumCanvas.Children[VolumeAndIndex[i].index - 1]).Stroke = new SolidColorBrush(Colors.White);
-						((Rectangle)spectrumCanvas.Children[VolumeAndIndex[i].index - 1]).StrokeThickness = 2;
-					}
-
-				if (GetTemplateChild("PART_SpectrumCanvas") != null && GetTemplateChild("PART_SpectrumCanvas") is Canvas c)
-				{
-					if (c.Background == null)
-						c.Background = new SolidColorBrush(Colors.Black);
-
-					//add current color average to end of list, and remove extras if needed
-					VolumeAndPitch.ColorsToBlend.Add(LEDModeDrivers.VolumeAndPitchReactive.GetAVGHSLColor(VolumeAndIndex.Select(x => x.v).ToList()));
-
-					if (VolumeAndPitch.ColorsToBlend.Count() > BlendedFrames + 1)
-						for (int i = VolumeAndPitch.ColorsToBlend.Count(); i > BlendedFrames + 1; i--)
-							VolumeAndPitch.ColorsToBlend.RemoveRange(0, 1);
-
-					//average last [BlendedFrames] background colors together
-					HSLColor Background = VolumeAndPitch.BlendColors();
-
-					//convert for solid brush
-					Color AVG_RGB = Color.FromArgb(255, Background.ToColor().R, Background.ToColor().G, Background.ToColor().B);
-					c.Background = new SolidColorBrush(Color.FromRgb((byte)AVG_RGB.R, (byte)AVG_RGB.G, (byte)AVG_RGB.B));
-
-					LEDModeDrivers.VolumeAndPitchReactive.ColorOut(Background);
+					//Add white border to the peaks on the UI, to show what's being used in the color calculation.
+					//Was originally for diagnostic, but it looks neat.
+					if (VolumeAndPeaks[i].p > 0)
+						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 2;
+					else
+						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 0;
 					
-					Vals.Text = "\t\t\t" + Math.Round(Background.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(Background.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
+					//Set color for the rectangles
+					System.Drawing.Color RGB = new HSLColor((double)i / BarCount, 1, VolumeAndPeaks[i].v);
+					((Rectangle)spectrumCanvas.Children[i]).Fill = new SolidColorBrush(Color.FromRgb(RGB.R, RGB.G, RGB.B));
 				}
-			}
 
+				if (spectrumCanvas.Background == null)
+					spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
+
+				//convert for solid brush
+				Color AVG_RGB = Color.FromArgb(255, Background.ToColor().R, Background.ToColor().G, Background.ToColor().B);
+					spectrumCanvas.Background = new SolidColorBrush(Color.FromRgb((byte)AVG_RGB.R, (byte)AVG_RGB.G, (byte)AVG_RGB.B));
+
+				//Display stats
+				Vals.Text = "\t\t\t" + Math.Round(Background.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(Background.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
+			}
 			if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				animationTimer.Stop();
 		}
 		private void UpdateBarLayout()
 		{
-			if (spectrumCanvas == null)
+			BarCount = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency) - Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
+			if (spectrumCanvas == null || spectrumCanvas.RenderSize.IsEmpty || BarCount == 0)
 				return;
 
-			barWidth = Math.Max(((double)(spectrumCanvas.RenderSize.Width) / (double)BarCount), 1);
-			maximumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency);
-			minimumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
-			bandWidth = Math.Max(((double)(maximumFrequencyIndex - minimumFrequencyIndex)) / spectrumCanvas.RenderSize.Width, 1.0);
-
-			int actualBarCount;
-			if (barWidth >= 1.0d)
-				actualBarCount = BarCount;
-			else
-				actualBarCount = Math.Max((int)(spectrumCanvas.RenderSize.Width / barWidth), 1);
-
-			int indexCount = maximumFrequencyIndex - minimumFrequencyIndex;
-			int linearIndexBucketSize = (int)Math.Round((double)indexCount / (double)actualBarCount, 0);
-			List<int> maxIndexList = new List<int>();
-
-			for (int i = 1; i < actualBarCount; i++)
-				maxIndexList.Add(minimumFrequencyIndex + (i * linearIndexBucketSize));
-
-			maxIndexList.Add(maximumFrequencyIndex);
-			barIndexMax = maxIndexList.ToArray();
-
-			barHeights = new double[actualBarCount];
+			barWidth = Math.Max(spectrumCanvas.RenderSize.Width / BarCount, 1);			
 
 			spectrumCanvas.Children.Clear();
 
-			double height = spectrumCanvas.RenderSize.Height;
-			for (int i = 0; i < actualBarCount; i++)
+			for (int i = 0; i < BarCount; i++)
 			{
 				double xCoord = (barWidth * i) + 1;
 				Rectangle barRectangle = new Rectangle()
 				{
-					Margin = new Thickness(xCoord, height, 0, 0),
+					Margin = new Thickness(xCoord, spectrumCanvas.RenderSize.Height, 0, 0),
 					Width = barWidth,
 					Height = 0,
 					Style = BarStyle,
@@ -978,8 +824,7 @@ namespace OpenLED_Host.Controls
 				};
 				spectrumCanvas.Children.Add(barRectangle);
 			}
-
-
+			
 			spectrumCanvas.Children.Add(Vals);
 
 			ActualBarWidth = barWidth;

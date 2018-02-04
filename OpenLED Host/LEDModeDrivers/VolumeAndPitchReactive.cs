@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Timers;
+using System.Windows.Threading;
 
 namespace OpenLED_Host.LEDModeDrivers
 {
@@ -11,7 +12,7 @@ namespace OpenLED_Host.LEDModeDrivers
 	/// </summary>
 	public class VolumeAndPitchReactive : LEDModeBase
 	{
-		private int _BlendedFrames;
+		private int _BlendedFrames = 3;
 		/// <summary>
 		/// Number of color frames that will be blended
 		/// </summary>
@@ -38,12 +39,129 @@ namespace OpenLED_Host.LEDModeDrivers
 			}
 		}
 
+		private int _MaximumFrequency = 2000;
+		/// <summary>
+		/// Max allowed frequency, defaults to 2000
+		/// </summary>
+		public int MaximumFrequency
+		{
+			get { return _MaximumFrequency; }
+			set
+			{
+				_MaximumFrequency = value;
+			}
+		}
+
+		private int _MinimumFrequency = 0;
+		/// <summary>
+		/// Min allowed frequency, defaults to 0
+		/// </summary>
+		public int MinimumFrequency
+		{
+			get { return _MinimumFrequency; }
+			set
+			{
+				_MinimumFrequency = value;
+			}
+		}
+		
+		private Timer ReactiveTimer = new Timer()
+		{
+			Interval = 20
+		};
 
 		public VolumeAndPitchReactive()
 		{
+			ReactiveTimer.Elapsed += ReactiveTimer_Tick;
+		}		
 
+		public void StartReacting()
+		{
+			ReactiveTimer.Start();
 		}
 
+		public void StopReacting()
+		{
+			ReactiveTimer.Stop();
+		}
+		private bool ticking = false;
+		private void ReactiveTimer_Tick(object sender, EventArgs e)
+		{
+			if (!ticking)
+			{
+				ticking = true;
+				HSLColor t;
+				GenerateColorData(out t);
+				ticking = false;
+			}
+			else { }
+		}
+
+		public List<(double,int)> GenerateColorData(out HSLColor AVGColor)
+		{
+			float[] channelData = new float[(int)Sound_Library.BassEngine.Instance.FFT];
+			Sound_Library.BassEngine.Instance.GetFFTData(channelData);
+
+			List<(double v, int p)> VolumesAndPeaks = new List<(double, int)>();
+
+			int scaleFactorLinear = 5;
+			bool allzeros = true;
+
+			int maximumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency);
+			int minimumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
+
+
+			for (int i = minimumFrequencyIndex; i <= maximumFrequencyIndex; i++)
+			{
+				//They need reset evert loop anyways
+				double fftBucketHeight = 0f;
+
+				if (channelData[i] > 1e-5)
+					allzeros = false;
+
+				fftBucketHeight = (channelData[i] * scaleFactorLinear);
+
+				//Keep peaks in range incase weird shit has happened
+				if (fftBucketHeight < 0f)
+					fftBucketHeight = 0f;
+				if (fftBucketHeight > 1)
+					fftBucketHeight = 1;
+
+				//This is used later for calculating colors and positions
+				VolumesAndPeaks.Add((fftBucketHeight, 0));
+			}
+
+			//If all the data was zeros, then don't update
+			if (!allzeros)
+			{
+				List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumesAndPeaks.Select(x=>x.v).ToList());
+				List<HSLColor> TopHSLValues = new List<HSLColor>();
+				for (int i = 0; i < Peaks.Count; i++)
+				{
+					if (Peaks[i] > 0)
+						TopHSLValues.Add(new HSLColor((double)i / VolumesAndPeaks.Count, 1, VolumesAndPeaks[i].v));
+					VolumesAndPeaks[i] = (VolumesAndPeaks[i].v, Peaks[i]);
+				}
+
+				//add current color average to end of list, and remove extras if needed
+				ColorsToBlend.Add(GetAVGHSLColor(TopHSLValues));
+				if (ColorsToBlend.Count() > BlendedFrames + 1)
+					for (int i = ColorsToBlend.Count(); i > BlendedFrames + 1; i--)
+						ColorsToBlend.RemoveRange(0, 1);
+
+				//average last [BlendedFrames] background colors together
+				AVGColor = BlendColors();
+
+				//Write color to all areas
+				ColorOut(AVGColor);
+			}
+			else
+			{
+				ColorOut(new HSLColor(0, 0, 0));
+				AVGColor = new HSLColor(0, 0, 0);
+			}
+			return VolumesAndPeaks;
+		}
 		/// <summary>
 		/// Blends the colors that have been placed in the ColorsToBlend List
 		/// </summary>
@@ -58,23 +176,16 @@ namespace OpenLED_Host.LEDModeDrivers
 			return ret;
 		}
 
-		public static HSLColor GetAVGHSLColor(List<double> Data)
+		public static HSLColor GetAVGHSLColor(List<HSLColor> Colors)
 		{
-			List<HSLColor> Colors = GetHSLColors(Data);
-			List<int> Peaks = Sound_Library.BassEngine.PeakDetection(Data);
-
-			List<HSLColor> TopHSLValues = new List<HSLColor>();
-			for (int i = 0; i < Peaks.Count; i++)
-				if (Peaks[i] > 0)
-					TopHSLValues.Add(Colors[i]);
 
 			double AVGH = 0;
-			for (int i = 0; i < TopHSLValues.Count(); i++)
-				if (TopHSLValues[i].Luminosity > 0)
-					AVGH = (AVGH * i + TopHSLValues[i].Hue) / (i + 1);
+			for (int i = 0; i < Colors.Count(); i++)
+				if (Colors[i].Luminosity > 0)
+					AVGH = (AVGH * i + Colors[i].Hue) / (i + 1);
 
 			//Get a good Value for the background color that is related to how "loud" the sound is by selecting the top 10%
-			HSLColor Average = new HSLColor(AVGH, 1, TopHSLValues.Count > 0 ? TopHSLValues.OrderByDescending(x => x.Luminosity).Take((int)(Math.Round(TopHSLValues.Count * .1) > 0 ? Math.Round(TopHSLValues.Count * .1) : TopHSLValues.Count)).Average(x => x.Luminosity) : 0);
+			HSLColor Average = new HSLColor(AVGH, 1, Colors.Count > 0 ? Colors.OrderByDescending(x => x.Luminosity).Take((int)(Math.Round(Colors.Count * .1) > 0 ? Math.Round(Colors.Count * .1) : Colors.Count)).Average(x => x.Luminosity) : 0);
 			if (double.IsNaN(Average.Luminosity))
 				Average.Luminosity = 0;
 
