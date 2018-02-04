@@ -8,7 +8,7 @@
         Title="MainWindow" Height="350" Width="525">
 	<controls:Spectrum
 					BarCount="500"
-					BarVisibility="Visible"
+					BarVisibility="Hidden"
 							
 					MinimumFrequency="0"
 					MaximumFrequency="2000"
@@ -17,5 +17,5 @@
 					ThresholdThreshold="0.1"
 					ThresholdInfluence=".5"
 							
-					BlendedFrames="5"/>
+					BlendedFrames="3"/>
 </Window>

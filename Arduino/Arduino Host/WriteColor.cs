@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO.Ports;
+using System.Threading;
 
 //TODO: Better communication between program and Arduino
 namespace Arduino_Host
@@ -19,26 +20,26 @@ namespace Arduino_Host
 		/// <param name="color">RGB Color to send</param>
 		/// <param name="COMPort">Option COM port to use, will autodetect otherwise</param>
 		/// <returns></returns>
-		public static bool RGB(System.Drawing.Color color, string COMPort = "")
+		public static void RGB(System.Drawing.Color color, string COMPort = "")
 		{
-			try
+			ThreadPool.QueueUserWorkItem(delegate
 			{
-				//TODO: Find better method of doing this, wouldn't want ot try writing RGB data to a Serial CNC or something
-				if (string.IsNullOrEmpty(COMPort) || !SerialPort.GetPortNames().Contains(COMPort))
-					COMPort = SerialPort.GetPortNames().First();
-
-				using (SerialPort serial = new SerialPort(COMPort, 115200))
+				try
 				{
-					serial.Open();
-					serial.Write(new byte[] { color.R, color.G, color.B }, 0, 3);
-				}
+					//TODO: Find better method of doing this, wouldn't want ot try writing RGB data to a Serial CNC or something
+					if (string.IsNullOrEmpty(COMPort) || !SerialPort.GetPortNames().Contains(COMPort))
+						COMPort = SerialPort.GetPortNames().First();
 
-				return true;
-			}
-			catch
-			{
-				return false;
-			}
+					using (SerialPort serial = new SerialPort(COMPort, 115200))
+					{
+						serial.Open();
+						serial.Write(new byte[] { color.R, color.G, color.B }, 0, 3);
+					}
+				}
+				catch
+				{
+				}
+			});
 		}
     }
 }

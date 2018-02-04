@@ -30,6 +30,7 @@ namespace OpenLED_Host.Controls
 		private int maximumFrequencyIndex = (int)Sound_Library.BassEngine.Instance.FFT - 1;
 		private int minimumFrequencyIndex;
 		private int[] barIndexMax;
+		LEDModeDrivers.VolumeAndPitchReactive VolumeAndPitch = new LEDModeDrivers.VolumeAndPitchReactive();
 		#endregion
 
 		#region Constants
@@ -332,6 +333,7 @@ namespace OpenLED_Host.Controls
 		/// <param name="newValue">The new value of <see cref="BlendedFrames"/></param>
 		protected virtual void OnBlendedFramesChanged(int oldValue, int newValue)
 		{
+			VolumeAndPitch.BlendedFrames = BlendedFrames;
 			UpdateBarLayout();
 		}
 
@@ -815,7 +817,6 @@ namespace OpenLED_Host.Controls
 			framesSinceLastFPSTick = 0;
 		}
 
-		private List<HSLColor> PrevColors = new List<HSLColor>();
 		private TextBlock Vals = new TextBlock
 		{
 			Background = new SolidColorBrush(Colors.Transparent),
@@ -830,9 +831,8 @@ namespace OpenLED_Host.Controls
 			
 			double CanvasHeight = spectrumCanvas.RenderSize.Height;
 			int barIndex = 0;
-			double peakDotHeight = Math.Max(barWidth / 2.0f, 1);
-			double barHeightScale = (CanvasHeight - peakDotHeight);
 			int barittercount = 0;
+			bool allzeros = true;
 			List<(double v, int index)> VolumeAndIndex = new List<(double h, int index)>();
 
 			for (int i = minimumFrequencyIndex; i <= maximumFrequencyIndex; i++)
@@ -841,6 +841,8 @@ namespace OpenLED_Host.Controls
 				double fftBucketHeight = 0f;
 				double barHeight = 0f;
 
+				if (channelData[i] != 0)
+					allzeros = false;
 				// If we're paused, keep drawing, but set the current height to 0 so the peaks fall.
 				if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				{
@@ -848,7 +850,7 @@ namespace OpenLED_Host.Controls
 				}
 				else // Draw the maximum value for the bar's band
 				{
-					fftBucketHeight = (channelData[i] * scaleFactorLinear) * barHeightScale;
+					fftBucketHeight = (channelData[i] * scaleFactorLinear) * CanvasHeight;
 
 					if (barHeight < fftBucketHeight)
 						barHeight = fftBucketHeight;
@@ -882,46 +884,49 @@ namespace OpenLED_Host.Controls
 					barIndex++;
 				}
 			}
-
-			List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumeAndIndex.Select(x => x.v).ToList());
-
-			//Clear alll the rectangle thicknesses so we can show the new bars
-			foreach (var rt in spectrumCanvas.Children)
-				if (rt is Rectangle r)
-					r.StrokeThickness = 0;
-
-			//Add white border to the peaks on the UI, to show what's being used in the color calculation.
-			//Was originally for diagnostic, but it looks neat.
-			for (int i = 0; i < Peaks.Count; i++)
-				if (Peaks[i] > 0)
-				{
-					((Rectangle)spectrumCanvas.Children[VolumeAndIndex[i].index - 1]).Stroke = new SolidColorBrush(Colors.White);
-					((Rectangle)spectrumCanvas.Children[VolumeAndIndex[i].index - 1]).StrokeThickness = 2;
-				}
 			
-			if (GetTemplateChild("PART_SpectrumCanvas") != null && GetTemplateChild("PART_SpectrumCanvas") is Canvas c)
+			//If all the data was zeros, then don't update
+			if(!allzeros)
 			{
-				if (c.Background == null)
-					c.Background = new SolidColorBrush(Colors.Black);
+				List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumeAndIndex.Select(x => x.v).ToList());
 
-				//add current color average to end of list, and remove extras if needed
-				PrevColors.Add(LEDModeDrivers.VolumeAndPitchReactive.GetAVGHSLColor(VolumeAndIndex.Select(x => x.v).ToList()));
+				//Clear alll the rectangle thicknesses so we can show the new bars
+				foreach (var rt in spectrumCanvas.Children)
+					if (rt is Rectangle r)
+						r.StrokeThickness = 0;
 
-				if (PrevColors.Count() > BlendedFrames + 1)
-					for (int i = PrevColors.Count(); i > BlendedFrames + 1; i--)
-						PrevColors.RemoveRange(0, 1);
+				//Add white border to the peaks on the UI, to show what's being used in the color calculation.
+				//Was originally for diagnostic, but it looks neat.
+				for (int i = 0; i < Peaks.Count; i++)
+					if (Peaks[i] > 0)
+					{
+						((Rectangle)spectrumCanvas.Children[VolumeAndIndex[i].index - 1]).Stroke = new SolidColorBrush(Colors.White);
+						((Rectangle)spectrumCanvas.Children[VolumeAndIndex[i].index - 1]).StrokeThickness = 2;
+					}
 
-				//average last i background colors together
-				HSLColor Background = new HSLColor(0, 1, 0);
-				for (int i = 0; i < PrevColors.Count(); i++)
-					Background = new HSLColor((Background.Hue * i + PrevColors[i].Hue) / (i + 1), 1, (Background.Luminosity * i + PrevColors[i].Luminosity) / (i + 1));
+				if (GetTemplateChild("PART_SpectrumCanvas") != null && GetTemplateChild("PART_SpectrumCanvas") is Canvas c)
+				{
+					if (c.Background == null)
+						c.Background = new SolidColorBrush(Colors.Black);
 
-				//convert for solid brush
-				Color AVG_RGB = Color.FromArgb(255, Background.ToColor().R, Background.ToColor().G, Background.ToColor().B);
-				c.Background = new SolidColorBrush(Color.FromRgb((byte)AVG_RGB.R, (byte)AVG_RGB.G, (byte)AVG_RGB.B));
+					//add current color average to end of list, and remove extras if needed
+					VolumeAndPitch.ColorsToBlend.Add(LEDModeDrivers.VolumeAndPitchReactive.GetAVGHSLColor(VolumeAndIndex.Select(x => x.v).ToList()));
 
+					if (VolumeAndPitch.ColorsToBlend.Count() > BlendedFrames + 1)
+						for (int i = VolumeAndPitch.ColorsToBlend.Count(); i > BlendedFrames + 1; i--)
+							VolumeAndPitch.ColorsToBlend.RemoveRange(0, 1);
 
-				Vals.Text = "\t\t\t" + Math.Round(Background.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(Background.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
+					//average last [BlendedFrames] background colors together
+					HSLColor Background = VolumeAndPitch.BlendColors();
+
+					//convert for solid brush
+					Color AVG_RGB = Color.FromArgb(255, Background.ToColor().R, Background.ToColor().G, Background.ToColor().B);
+					c.Background = new SolidColorBrush(Color.FromRgb((byte)AVG_RGB.R, (byte)AVG_RGB.G, (byte)AVG_RGB.B));
+
+					LEDModeDrivers.VolumeAndPitchReactive.ColorOut(Background);
+					
+					Vals.Text = "\t\t\t" + Math.Round(Background.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(Background.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
+				}
 			}
 
 			if (!Sound_Library.BassEngine.Instance.IsPlaying)

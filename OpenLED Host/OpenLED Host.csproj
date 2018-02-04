@@ -63,6 +63,7 @@
     </ApplicationDefinition>
     <Compile Include="CLI.cs" />
     <Compile Include="ConsoleAllocatior.cs" />
+    <Compile Include="LEDModeDrivers\LEDModeBase.cs" />
     <Compile Include="LEDModeDrivers\LEDModes.cs" />
     <Compile Include="LEDModeDrivers\VolumeAndPitchReactive.cs" />
     <Compile Include="Controls\Spectrum.cs" />

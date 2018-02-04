@@ -114,21 +114,25 @@ namespace Sound_Library
 			float[] StereoBuffer = new float[(int)FFT * 2];
 			if ((BassWasapi.BASS_WASAPI_GetData(StereoBuffer, (int)FFT*2)) > 0)
 			{
-				float[] YStereoBuffer = new float[(int)FFT * 2];
-				float[] YBuffer = new float[(int)FFT];
-				FastFourierTransform(StereoBuffer, YStereoBuffer);
-
-				//average the left and right channels
-				for (int i = 0; i < (int)FFT; i++)
+				//if all the values are 0, then don't bother
+				if (StereoBuffer.Count(x=>x!=0) != 0)
 				{
-					fftDataBuffer[i] = (StereoBuffer[i] + StereoBuffer[(int)FFT * 2 - i - 1]) / 2;
-					YBuffer[i] = (YStereoBuffer[i] + YStereoBuffer[(int)FFT * 2 - i - 1]) / 2;
-				}
+					float[] YStereoBuffer = new float[(int)FFT * 2];
+					float[] YBuffer = new float[(int)FFT];
+					FastFourierTransform(StereoBuffer, YStereoBuffer);
 
-				for (int i = 0; i < fftDataBuffer.Length/2; i++)
-				{
-					// Calculate actual intensities for the FFT results.
-					fftDataBuffer[i] = (float)Math.Sqrt(fftDataBuffer[i] * fftDataBuffer[i] + YStereoBuffer[i] * YStereoBuffer[i])*4;
+					//average the left and right channels
+					for (int i = 0; i < (int)FFT; i++)
+					{
+						fftDataBuffer[i] = (StereoBuffer[i] + StereoBuffer[(int)FFT * 2 - i - 1]) / 2;
+						YBuffer[i] = (YStereoBuffer[i] + YStereoBuffer[(int)FFT * 2 - i - 1]) / 2;
+					}
+
+					for (int i = 0; i < fftDataBuffer.Length / 2; i++)
+					{
+						// Calculate actual intensities for the FFT results.
+						fftDataBuffer[i] = (float)Math.Sqrt(fftDataBuffer[i] * fftDataBuffer[i] + YStereoBuffer[i] * YStereoBuffer[i]) * 4;
+					}
 				}
 
 				return true;

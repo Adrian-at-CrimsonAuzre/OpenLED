@@ -6,8 +6,58 @@ using System.Threading.Tasks;
 
 namespace OpenLED_Host.LEDModeDrivers
 {
-	public static class VolumeAndPitchReactive
+	/// <summary>
+	/// Full of all of the functions that make this possible to standardize throughout the application
+	/// </summary>
+	public class VolumeAndPitchReactive : LEDModeBase
 	{
+		private int _BlendedFrames;
+		/// <summary>
+		/// Number of color frames that will be blended
+		/// </summary>
+		public int BlendedFrames
+		{
+			get { return _BlendedFrames; }
+			set
+			{
+				_BlendedFrames = value;
+			}
+		}
+
+		private List<HSLColor> _ColorsToBlend = new List<HSLColor>();
+		/// <summary>
+		/// Colors to be used for blending
+		/// </summary>
+		/// <seealso cref="BlendedFrames"/>
+		public List<HSLColor> ColorsToBlend
+		{
+			get { return _ColorsToBlend; }
+			set
+			{
+				_ColorsToBlend = value;
+			}
+		}
+
+
+		public VolumeAndPitchReactive()
+		{
+
+		}
+
+		/// <summary>
+		/// Blends the colors that have been placed in the ColorsToBlend List
+		/// </summary>
+		/// <returns>A blended color</returns>
+		public HSLColor BlendColors()
+		{
+			HSLColor ret = new HSLColor(0, 1, 0);
+
+			for (int i = 0; i < ColorsToBlend.Count(); i++)
+				ret = new HSLColor((ret.Hue * i + ColorsToBlend[i].Hue) / (i + 1), 1, (ret.Luminosity * i + ColorsToBlend[i].Luminosity) / (i + 1));
+
+			return ret;
+		}
+
 		public static HSLColor GetAVGHSLColor(List<double> Data)
 		{
 			List<HSLColor> Colors = GetHSLColors(Data);

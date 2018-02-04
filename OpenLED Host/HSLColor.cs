@@ -121,6 +121,13 @@ namespace OpenLED_Host
 		}
 		#endregion
 
+		#region Operators
+		public static HSLColor operator +(HSLColor c1, HSLColor c2)
+		{
+			return new HSLColor((c1.Hue + c2.Hue) / 2, (c1.Saturation + c2.Saturation) / 2, (c1.Luminosity + c2.Luminosity) / 2);
+		}
+
+		#endregion Operators
 		public void SetRGB(int red, int green, int blue)
 		{
 			HSLColor hslColor = (HSLColor)Color.FromArgb(red, green, blue);
