@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace OpenLED_Host
+namespace OpenLED_Host.Models
 {
 	/// <summary>
 	/// Impliments INotifyPropertyChanged

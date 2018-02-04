@@ -7,9 +7,8 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Linq;
-using OpenLED_Host;
 
-namespace OpenLED_Host
+namespace OpenLED_Host.Controls
 {
 
 	/// <summary>
@@ -828,21 +827,20 @@ namespace OpenLED_Host
 		private void UpdateSpectrumShapes()
 		{
 			framesSinceLastFPSTick++;
-
-			bool allZero = true;
-			double fftBucketHeight = 0f;
-			double barHeight = 0f;
-			double lastPeakHeight = 0f;
-			double peakYPos = 0f;
-			double height = spectrumCanvas.RenderSize.Height;
+			
+			double CanvasHeight = spectrumCanvas.RenderSize.Height;
 			int barIndex = 0;
 			double peakDotHeight = Math.Max(barWidth / 2.0f, 1);
-			double barHeightScale = (height - peakDotHeight);
+			double barHeightScale = (CanvasHeight - peakDotHeight);
 			int barittercount = 0;
-			List<Tuple<HSLColor, int>> HSL_Values = new List<Tuple<HSLColor, int>>();
+			List<(double v, int index)> VolumeAndIndex = new List<(double h, int index)>();
 
 			for (int i = minimumFrequencyIndex; i <= maximumFrequencyIndex; i++)
 			{
+				//They need reset evert loop anyways
+				double fftBucketHeight = 0f;
+				double barHeight = 0f;
+
 				// If we're paused, keep drawing, but set the current height to 0 so the peaks fall.
 				if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				{
@@ -850,7 +848,6 @@ namespace OpenLED_Host
 				}
 				else // Draw the maximum value for the bar's band
 				{
-
 					fftBucketHeight = (channelData[i] * scaleFactorLinear) * barHeightScale;
 
 					if (barHeight < fftBucketHeight)
@@ -860,75 +857,56 @@ namespace OpenLED_Host
 				}
 
 				// If this is the last FFT bucket in the bar's group, draw the bar.
-				int currentIndexMax = barIndexMax[barIndex];
-				if (i == currentIndexMax)
+				if (i == barIndexMax[barIndex])
 				{
-					//DO NOT REMOVE, EVERYTHING BREAKS?
 					barittercount++;
 
 					// Peaks can't surpass the height of the control.
-					if (barHeight > height)
-						barHeight = height;
+					if (barHeight > CanvasHeight)
+						barHeight = CanvasHeight;
 					
-					peakYPos = barHeight;
 
 					double xCoord = (barWidth * barIndex) + 1;
 
-					((Rectangle)spectrumCanvas.Children[barIndex]).Margin = new Thickness(xCoord, (height - 1) - barHeight, 0, 0);
+					((Rectangle)spectrumCanvas.Children[barIndex]).Margin = new Thickness(xCoord, (CanvasHeight - 1) - barHeight, 0, 0);
 					((Rectangle)spectrumCanvas.Children[barIndex]).Height = barHeight;
 
 
-					//Color Calcs;
-					HSLColor HSL = new HSLColor(((double)barittercount) / BarCount, 1, Math.Pow((barHeight) / height, 1.5));
-					System.Drawing.Color RGB = HSL;
-
-
+					//Color Calc
+					System.Drawing.Color RGB = new HSLColor(((double)barittercount) / BarCount, 1, barHeight / CanvasHeight);
 					((Rectangle)spectrumCanvas.Children[barIndex]).Fill = new SolidColorBrush(Color.FromRgb(RGB.R, RGB.G, RGB.B));
-					HSL_Values.Add(new Tuple<HSLColor, int>(HSL, barittercount));
 
+					//This is used later for calculating colors and positions
+					VolumeAndIndex.Add((barHeight / CanvasHeight, barittercount));
 
-					lastPeakHeight = barHeight;
-					barHeight = 0f;
 					barIndex++;
 				}
 			}
 
-			List<int> Peaks = Sound_Library.BassEngine.PeakDetection(HSL_Values.Select(x => x.Item1.Luminosity).ToList());
+			List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumeAndIndex.Select(x => x.v).ToList());
 
-			List<Tuple<HSLColor, int>> TopHSLValues = new List<Tuple<HSLColor, int>>();
-			for (int i = 0; i < Peaks.Count; i++)
-				if (Peaks[i] > 0)
-					TopHSLValues.Add(HSL_Values[i]);
-
-
-			//Show visually which bars colors are being averaged
+			//Clear alll the rectangle thicknesses so we can show the new bars
 			foreach (var rt in spectrumCanvas.Children)
 				if (rt is Rectangle r)
 					r.StrokeThickness = 0;
-			for (int i = 0; i < TopHSLValues.Count(); i++)
-			{
-				((Rectangle)spectrumCanvas.Children[TopHSLValues[i].Item2 - 1]).Stroke = new SolidColorBrush(Colors.White);
-				((Rectangle)spectrumCanvas.Children[TopHSLValues[i].Item2 - 1]).StrokeThickness = 2;
-			}
 
+			//Add white border to the peaks on the UI, to show what's being used in the color calculation.
+			//Was originally for diagnostic, but it looks neat.
+			for (int i = 0; i < Peaks.Count; i++)
+				if (Peaks[i] > 0)
+				{
+					((Rectangle)spectrumCanvas.Children[VolumeAndIndex[i].index - 1]).Stroke = new SolidColorBrush(Colors.White);
+					((Rectangle)spectrumCanvas.Children[VolumeAndIndex[i].index - 1]).StrokeThickness = 2;
+				}
+			
 			if (GetTemplateChild("PART_SpectrumCanvas") != null && GetTemplateChild("PART_SpectrumCanvas") is Canvas c)
 			{
 				if (c.Background == null)
 					c.Background = new SolidColorBrush(Colors.Black);
 
-				//get actual average of the n/4 values
-				double AVGH = 0;
-				for (int i = 0; i < TopHSLValues.Count(); i++)
-					if (TopHSLValues[i].Item1.Luminosity > 0)
-						AVGH = (AVGH * i + TopHSLValues[i].Item1.Hue) / (i + 1);
+				//add current color average to end of list, and remove extras if needed
+				PrevColors.Add(LEDModeDrivers.VolumeAndPitchReactive.GetAVGHSLColor(VolumeAndIndex.Select(x => x.v).ToList()));
 
-				//Get a good Value for the background color that is related to how "loud" the sound is by selecting the top 25%
-				HSLColor temp = new HSLColor(AVGH, 1, TopHSLValues.Count > 0 ? TopHSLValues.OrderByDescending(x => x.Item1.Luminosity).Take((int)(Math.Round(TopHSLValues.Count * .1) > 0 ? Math.Round(TopHSLValues.Count * .1) : TopHSLValues.Count)).Average(x => x.Item1.Luminosity) : 0);
-				if (double.IsNaN(temp.Luminosity))
-					temp.Luminosity = 0;
-
-				//add current color to end of list, and remove extras if needed
-				PrevColors.Add(temp);
 				if (PrevColors.Count() > BlendedFrames + 1)
 					for (int i = PrevColors.Count(); i > BlendedFrames + 1; i--)
 						PrevColors.RemoveRange(0, 1);
@@ -946,7 +924,7 @@ namespace OpenLED_Host
 				Vals.Text = "\t\t\t" + Math.Round(Background.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(Background.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
 			}
 
-			if (allZero && !Sound_Library.BassEngine.Instance.IsPlaying)
+			if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				animationTimer.Stop();
 		}
 		private void UpdateBarLayout()
@@ -989,7 +967,9 @@ namespace OpenLED_Host
 					Width = barWidth,
 					Height = 0,
 					Style = BarStyle,
-					Visibility = BarVisibility
+					Visibility = BarVisibility,
+					Stroke = new SolidColorBrush(Colors.White),
+					StrokeThickness = 0
 				};
 				spectrumCanvas.Children.Add(barRectangle);
 			}
