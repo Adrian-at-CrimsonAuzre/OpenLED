@@ -9,7 +9,7 @@ using System.Windows.Threading;
 using System.Linq;
 using OpenLED_Windows_Host;
 
-namespace Sound_Library
+namespace OpenLED_Windows_GUI_Wrapper
 {
 
 	/// <summary>
@@ -25,20 +25,16 @@ namespace Sound_Library
 		private readonly DispatcherTimer animationTimer;
 		private Canvas spectrumCanvas;
 		private double[] barHeights;
-		private float[] channelData = new float[(int)BassEngine.Instance.FFT];
+		private float[] channelData = new float[(int)Sound_Library.BassEngine.Instance.FFT];
 		private double bandWidth = 1.0;
 		private double barWidth = 1;
-		private int maximumFrequencyIndex = (int)BassEngine.Instance.FFT - 1;
+		private int maximumFrequencyIndex = (int)Sound_Library.BassEngine.Instance.FFT - 1;
 		private int minimumFrequencyIndex;
 		private int[] barIndexMax;
 		#endregion
 
 		#region Constants
 		private const int scaleFactorLinear = 22;
-		private const int scaleFactorSqr = 2;
-		private const double minDBValue = -90;
-		private const double maxDBValue = 0;
-		private const double dbScale = (maxDBValue - minDBValue);
 		private const int defaultUpdateInterval = 0;
 		#endregion
 
@@ -767,7 +763,7 @@ namespace Sound_Library
 			};
 			animationTimer.Tick += animationTimer_Tick;
 
-			BassEngine.Instance.PropertyChanged += soundPlayer_PropertyChanged;
+			Sound_Library.BassEngine.Instance.PropertyChanged += soundPlayer_PropertyChanged;
 			UpdateBarLayout();
 			animationTimer.Start();
 		}
@@ -808,7 +804,7 @@ namespace Sound_Library
 			if (spectrumCanvas == null || spectrumCanvas.RenderSize.Width < 1 || spectrumCanvas.RenderSize.Height < 1)
 				return;
 
-			if (BassEngine.Instance.IsPlaying && !BassEngine.Instance.GetFFTData(channelData))
+			if (Sound_Library.BassEngine.Instance.IsPlaying && !Sound_Library.BassEngine.Instance.GetFFTData(channelData))
 				return;
 
 			UpdateSpectrumShapes();
@@ -848,7 +844,7 @@ namespace Sound_Library
 			for (int i = minimumFrequencyIndex; i <= maximumFrequencyIndex; i++)
 			{
 				// If we're paused, keep drawing, but set the current height to 0 so the peaks fall.
-				if (!BassEngine.Instance.IsPlaying)
+				if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				{
 					barHeight = 0f;
 				}
@@ -897,7 +893,7 @@ namespace Sound_Library
 				}
 			}
 
-			List<int> Peaks = ThresholdDetection(HSL_Values.Select(x => x.Item1.Luminosity).ToList());
+			List<int> Peaks = Sound_Library.BassEngine.PeakDetection(HSL_Values.Select(x => x.Item1.Luminosity).ToList());
 
 			List<Tuple<HSLColor, int>> TopHSLValues = new List<Tuple<HSLColor, int>>();
 			for (int i = 0; i < Peaks.Count; i++)
@@ -950,97 +946,17 @@ namespace Sound_Library
 				Vals.Text = "\t\t\t" + Math.Round(Background.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(Background.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
 			}
 
-			if (allZero && !BassEngine.Instance.IsPlaying)
+			if (allZero && !Sound_Library.BassEngine.Instance.IsPlaying)
 				animationTimer.Stop();
-		}		
-
-		private List<int> ThresholdDetection(List<double> y)
-		{
-			try
-			{
-				//Add pad to front of y so that initial values can be picked up. Adding /these/ values to the front helps the algorithm build a better picture of the first peak (instead of selecting everything before the first peak)
-				List<double> InvertedThreshold = new List<double>(y.GetRange(0, ThresholdWindow + 1));
-				for (int i = 0; i <= ThresholdWindow; i++)
-					y.Insert(0, y[i + i - (i == 0 ? 0 : 1)]);
-
-				//set these up to the right size
-				List<int> signals = new List<int>(Enumerable.Repeat(0, y.Count));
-				List<double> FilteredY = new List<double>(Enumerable.Repeat(0.0, y.Count));
-				List<double> avgFilter = new List<double>(Enumerable.Repeat(0.0, y.Count));
-				List<double> stdFilter = new List<double>(Enumerable.Repeat(0.0, y.Count));
-
-				//Copy the section of data over
-				List<double> subList = new List<double>(Enumerable.Repeat(0.0, ThresholdWindow));
-				for (int i = 0; i < ThresholdWindow; i++)
-					subList[i] = y[i];
-
-				//Get our first datapoint
-				avgFilter[ThresholdWindow] = subList.Average();
-				stdFilter[ThresholdWindow] = StandardDeviation(subList);
-
-				for (int i = ThresholdWindow + 1; i < y.Count; i++)
-				{
-					if (Math.Abs(y[i] - avgFilter[i - 1]) > ThresholdThreshold * stdFilter[i - 1])
-					{
-						if (y[i] > avgFilter[i - 1])
-							signals[i] = 1;
-						else
-							signals[i] = -1;
-						FilteredY[i] = ThresholdInfluence * y[i] + (1 - ThresholdInfluence) * FilteredY[i - 1];
-					}
-					else
-					{
-						signals[i] = 0;
-						FilteredY[i] = y[i];
-					}
-
-					//remake sublist
-					for (int j = i - ThresholdWindow; j < i; j++)
-						subList.Add(FilteredY[i]);
-
-					avgFilter[i] = subList.Average();
-					stdFilter[i] = StandardDeviation(subList);
-				}
-
-				//remove pad
-				for (int i = 0; i <= ThresholdWindow; i++)
-					signals.Remove(0);
-
-				return signals;
-			}
-			catch
-			{
-				//if break, return empty list
-				return new List<int>(Enumerable.Repeat(0, y.Count));
-			}
 		}
-
-		/// <summary>
-		/// Finds standard deviation of a list of doubles
-		/// </summary>
-		/// <param name="values">List to find deviation of</param>
-		/// <returns></returns>
-		private double StandardDeviation(List<double> values)
-		{
-			var g = values.Aggregate(new { mean = 0.0, sum = 0.0, count = 0 },
-			(acc, val) =>
-			{
-				var newcount = acc.count + 1;
-				double delta = val - acc.mean;
-				var newmean = acc.mean + delta / newcount;
-				return new { mean = newmean, sum = acc.sum + delta * (val - newmean), count = newcount };
-			});
-			return Math.Sqrt(g.sum / g.count);
-		}
-
 		private void UpdateBarLayout()
 		{
 			if (spectrumCanvas == null)
 				return;
 
 			barWidth = Math.Max(((double)(spectrumCanvas.RenderSize.Width) / (double)BarCount), 1);
-			maximumFrequencyIndex = BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency);
-			minimumFrequencyIndex = BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
+			maximumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency);
+			minimumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
 			bandWidth = Math.Max(((double)(maximumFrequencyIndex - minimumFrequencyIndex)) / spectrumCanvas.RenderSize.Width, 1.0);
 
 			int actualBarCount;
@@ -1091,7 +1007,7 @@ namespace Sound_Library
 			switch (e.PropertyName)
 			{
 				case "IsPlaying":
-					if (BassEngine.Instance.IsPlaying && !animationTimer.IsEnabled)
+					if (Sound_Library.BassEngine.Instance.IsPlaying && !animationTimer.IsEnabled)
 						animationTimer.Start();
 					break;
 			}

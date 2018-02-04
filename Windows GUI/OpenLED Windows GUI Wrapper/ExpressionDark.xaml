@@ -10,7 +10,7 @@
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                     mc:Ignorable="d"
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                    xmlns:svl="clr-namespace:Sound_Library;assembly=Sound_Library">
+                    xmlns:local="clr-namespace:OpenLED_Windows_GUI_Wrapper">
 
 	<!-- Main Colors -->
 
@@ -168,7 +168,7 @@
                      Color="#888" />
 
 	<!-- Region: Spectrum -->
-	<Style TargetType="{x:Type svl:Spectrum}">
+	<Style TargetType="{x:Type local:Spectrum}">
 		<Setter Property="BarStyle">
 			<Setter.Value>
 				<Style TargetType="{x:Type Rectangle}">
@@ -181,7 +181,7 @@
 		</Setter>
 		<Setter Property="Template">
 			<Setter.Value>
-				<ControlTemplate TargetType="{x:Type svl:Spectrum}">
+				<ControlTemplate TargetType="{x:Type local:Spectrum}">
 					<Border Background="{StaticResource ControlBackgroundBrush}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"

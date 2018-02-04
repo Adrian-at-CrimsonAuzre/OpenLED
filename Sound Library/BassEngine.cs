@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Interop;
 using Un4seen.Bass;
@@ -8,7 +11,7 @@ using Un4seen.BassWasapi;
 
 namespace Sound_Library
 {
-    public class BassEngine : OpenLED_Windows_Host.NotifyBase
+    public class BassEngine
     {
         #region Fields
 		public readonly FFTSize FFT = FFTSize.FFT32768;
@@ -209,6 +212,101 @@ namespace Sound_Library
 					Y[i] /= n;
 				}
 			}
-		}	
-    }
+		}
+
+		/// <summary>
+		/// Detects peaks out of data
+		/// </summary>
+		/// <param name="y">Values to perform peak detection</param>
+		/// <param name="ThresholdWindow">Window to search for peaks in, default of 5</param>
+		/// <param name="ThresholdThreshold">Filter correction value, default of .1</param>
+		/// <param name="ThresholdInfluence">Changes falloff of detected peak, default of .5</param>
+		/// <returns>List of values (-1, 0, 1) for peak, average, and trough</returns>
+		public static List<int> PeakDetection(List<double> y, int ThresholdWindow = 5, double ThresholdThreshold = 0.1, double ThresholdInfluence = .5)
+		{
+			try
+			{
+				//Add pad to front of y so that initial values can be picked up. Adding /these/ values to the front helps the algorithm build a better picture of the first peak (instead of selecting everything before the first peak)
+				List<double> InvertedThreshold = new List<double>(y.GetRange(0, +1));
+				for (int i = 0; i <= ThresholdWindow; i++)
+					y.Insert(0, y[i + i - (i == 0 ? 0 : 1)]);
+
+				//set these up to the right size
+				List<int> signals = new List<int>(Enumerable.Repeat(0, y.Count));
+				List<double> FilteredY = new List<double>(Enumerable.Repeat(0.0, y.Count));
+				List<double> avgFilter = new List<double>(Enumerable.Repeat(0.0, y.Count));
+				List<double> stdFilter = new List<double>(Enumerable.Repeat(0.0, y.Count));
+
+				//Copy the section of data over
+				List<double> subList = new List<double>(Enumerable.Repeat(0.0, ThresholdWindow));
+				for (int i = 0; i < ThresholdWindow; i++)
+					subList[i] = y[i];
+
+				//Get our first datapoint
+				avgFilter[ThresholdWindow] = subList.Average();
+				stdFilter[ThresholdWindow] = StandardDeviation(subList);
+
+				for (int i = ThresholdWindow + 1; i < y.Count; i++)
+				{
+					if (Math.Abs(y[i] - avgFilter[i - 1]) > ThresholdThreshold * stdFilter[i - 1])
+					{
+						if (y[i] > avgFilter[i - 1])
+							signals[i] = 1;
+						else
+							signals[i] = -1;
+						FilteredY[i] = ThresholdInfluence * y[i] + (1 - ThresholdInfluence) * FilteredY[i - 1];
+					}
+					else
+					{
+						signals[i] = 0;
+						FilteredY[i] = y[i];
+					}
+
+					//remake sublist
+					for (int j = i - ThresholdWindow; j < i; j++)
+						subList.Add(FilteredY[i]);
+
+					avgFilter[i] = subList.Average();
+					stdFilter[i] = StandardDeviation(subList);
+				}
+
+				//remove pad
+				for (int i = 0; i <= ThresholdWindow; i++)
+					signals.Remove(0);
+
+				return signals;
+			}
+			catch
+			{
+				//if break, return empty list
+				return new List<int>(Enumerable.Repeat(0, y.Count));
+			}
+		}
+
+		/// <summary>
+		/// Finds standard deviation of a list of doubles
+		/// </summary>
+		/// <param name="values">List to find deviation of</param>
+		/// <returns>Standard deviation of a dataset</returns>
+		private static double StandardDeviation(List<double> values)
+		{
+			var g = values.Aggregate(new { mean = 0.0, sum = 0.0, count = 0 },
+			(acc, val) =>
+			{
+				var newcount = acc.count + 1;
+				double delta = val - acc.mean;
+				var newmean = acc.mean + delta / newcount;
+				return new { mean = newmean, sum = acc.sum + delta * (val - newmean), count = newcount };
+			});
+			return Math.Sqrt(g.sum / g.count);
+		}
+
+
+		//base for INotifyPropertyChanged
+		public event PropertyChangedEventHandler PropertyChanged;
+		public virtual void NotifyPropertyChanged([CallerMemberName]string member = "")
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(member));
+		}
+	}
 }
