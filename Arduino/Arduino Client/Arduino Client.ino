@@ -18,8 +18,7 @@ void loop()
 	while (!Serial.available()) {}
 
 	//read in 3 bytes of color information
-	for (int i = 0; i < 3; i++)
-		SerialRGBIn[i] = Serial.read();
+	Serial.readBytes(SerialRGBIn, 3);
 
 	//brightness correction, since these LEDs are bright as hell
 	FastLED.showColor(CRGB(((int)SerialRGBIn[0]) / 4, ((int)SerialRGBIn[1]) / 4, ((int)SerialRGBIn[2]) / 4));
