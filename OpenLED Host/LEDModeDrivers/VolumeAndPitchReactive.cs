@@ -160,6 +160,8 @@ namespace OpenLED_Host.LEDModeDrivers
 				ColorOut(new HSLColor(0, 0, 0));
 				AVGColor = new HSLColor(0, 0, 0);
 			}
+			//print the color we're using
+			Console.WriteLine(AVGColor);
 			return VolumesAndPeaks;
 		}
 		/// <summary>
