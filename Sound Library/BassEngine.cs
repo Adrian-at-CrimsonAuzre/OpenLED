@@ -14,7 +14,7 @@ namespace Sound_Library
     public class BassEngine
     {
         #region Fields
-		public readonly FFTSize FFT = FFTSize.FFT32768;
+		public readonly FFTSize FFT = FFTSize.FFT8192;
 
 		private static BassEngine _Instance;
 		/// <summary>
@@ -61,11 +61,8 @@ namespace Sound_Library
 			BassWasapi.LoadMe();
 
 
-			if (!Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_SPEAKERS, (new WindowInteropHelper(Application.Current.MainWindow)).Handle))
-			{
-				MessageBox.Show(Application.Current.MainWindow, "Bass initialization error!");
-				Application.Current.MainWindow.Close();
-			}
+			if (!Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_SPEAKERS, Process.GetCurrentProcess().MainWindowHandle))
+				Console.WriteLine("Bass initialization error!");
 
 			#region WASAPI
 			int WASAPIDeviceIndex = -100;
@@ -294,15 +291,11 @@ namespace Sound_Library
 		/// <returns>Standard deviation of a dataset</returns>
 		private static double StandardDeviation(List<double> values)
 		{
-			var g = values.Aggregate(new { mean = 0.0, sum = 0.0, count = 0 },
-			(acc, val) =>
-			{
-				var newcount = acc.count + 1;
-				double delta = val - acc.mean;
-				var newmean = acc.mean + delta / newcount;
-				return new { mean = newmean, sum = acc.sum + delta * (val - newmean), count = newcount };
-			});
-			return Math.Sqrt(g.sum / g.count);
+			double average = values.Average();
+
+			double sumOfSquaresOfDifferences = values.Select(val => (val - average) * (val - average)).Sum();
+
+			return Math.Sqrt(sumOfSquaresOfDifferences / values.Count);
 		}
 
 
