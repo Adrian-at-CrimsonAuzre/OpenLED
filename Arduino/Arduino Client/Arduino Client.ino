@@ -23,7 +23,7 @@ void loop()
 	{
 		//Set LEDs to black if we haven't gotten sound data
 		resetLEDs++;
-		if (resetLEDs >= 16000000)
+		if (resetLEDs >= 30000)
 		{
 			resetLEDs = 0;
 			FastLED.showColor(CRGB(0, 0, 0));
