@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 
-namespace OpenLED_Windows_Host
+namespace OpenLED_Host
 {
 	/// <summary>
 	/// Class that stores and deals with HSL Colors

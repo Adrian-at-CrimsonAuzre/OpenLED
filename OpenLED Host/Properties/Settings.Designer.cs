@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace OpenLED_Windows_GUI_Wrapper.Properties
+namespace OpenLED_Host.Properties
 {
 
 

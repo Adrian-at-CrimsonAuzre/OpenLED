@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace OpenLED_Windows_GUI_Wrapper
+namespace OpenLED_Host
 {
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml

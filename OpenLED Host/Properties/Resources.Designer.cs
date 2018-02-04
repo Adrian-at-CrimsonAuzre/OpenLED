@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace OpenLED_Windows_GUI_Wrapper.Properties
+namespace OpenLED_Host.Properties
 {
 
 
@@ -44,7 +44,7 @@ namespace OpenLED_Windows_GUI_Wrapper.Properties
 			{
 				if ((resourceMan == null))
 				{
-					global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("OpenLED_Windows_GUI_Wrapper.Properties.Resources", typeof(Resources).Assembly);
+					global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("OpenLED_Host.Properties.Resources", typeof(Resources).Assembly);
 					resourceMan = temp;
 				}
 				return resourceMan;

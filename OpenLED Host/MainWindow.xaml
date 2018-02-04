@@ -1,13 +1,13 @@
-﻿<Window x:Class="OpenLED_Windows_GUI_Wrapper.MainWindow"
+﻿<Window x:Class="OpenLED_Host.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:OpenLED_Windows_GUI_Wrapper"
+        xmlns:local="clr-namespace:OpenLED_Host"
 		mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
 	<local:Spectrum
-					BarCount="2000"
+					BarCount="500"
 					BarVisibility="Visible"
 							
 					MinimumFrequency="0"

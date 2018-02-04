@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BAFEEB20-FEEE-4444-BBB6-1154657EB7E9}</ProjectGuid>
+    <ProjectGuid>{E208FA23-4633-4D2C-A0AD-75E8BA697732}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>OpenLED_Windows_GUI_Wrapper</RootNamespace>
-    <AssemblyName>OpenLED Windows GUI Wrapper</AssemblyName>
+    <RootNamespace>OpenLED_Host</RootNamespace>
+    <AssemblyName>OpenLED Host</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Mono.Options, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Options.5.3.0.1\lib\net4-client\Mono.Options.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -55,10 +58,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CLI.cs" />
+    <Compile Include="ConsoleAllocatior.cs" />
+    <Compile Include="LEDModeDrivers\LEDModes.cs" />
     <Compile Include="Spectrum.cs" />
     <Page Include="ExpressionDark.xaml">
-      <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -68,12 +74,14 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="HSLColor.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NotifyBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -91,6 +99,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -100,14 +109,18 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\OpenLED Windows Host\OpenLED Windows Host.csproj">
-      <Project>{26b56151-965a-4a6c-81cb-11833448b299}</Project>
-      <Name>OpenLED Windows Host</Name>
+    <ProjectReference Include="..\Arduino\Arduino Host\Arduino Host.csproj">
+      <Project>{5d335d51-c8c2-4433-968a-e2799fd4e9c5}</Project>
+      <Name>Arduino Host</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Sound Library\SoundLibrary.csproj">
+    <ProjectReference Include="..\Sound Library\SoundLibrary.csproj">
       <Project>{be98d934-049b-4151-869c-0ba921325fff}</Project>
       <Name>SoundLibrary</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="ViewModels\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

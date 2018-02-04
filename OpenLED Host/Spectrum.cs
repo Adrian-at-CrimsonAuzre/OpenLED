@@ -7,9 +7,9 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Linq;
-using OpenLED_Windows_Host;
+using OpenLED_Host;
 
-namespace OpenLED_Windows_GUI_Wrapper
+namespace OpenLED_Host
 {
 
 	/// <summary>
