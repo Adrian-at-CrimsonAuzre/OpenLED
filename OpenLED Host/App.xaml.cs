@@ -28,7 +28,7 @@ namespace OpenLED_Host
 			{
 				//Launch GUI
 				ConsoleAllocator.HideConsoleWindow();
-				new MainWindow().ShowDialog();
+				new Views.MainWindow().ShowDialog();
 			}
 			else
 			{

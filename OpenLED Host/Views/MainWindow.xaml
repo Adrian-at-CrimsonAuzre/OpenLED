@@ -1,16 +1,25 @@
-﻿<Window x:Class="OpenLED_Host.MainWindow"
+﻿<Window x:Class="OpenLED_Host.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:OpenLED_Host.Views"
 		xmlns:controls="clr-namespace:OpenLED_Host.Controls"
 		mc:Ignorable="d"
+		Closing="Window_Closing"
         Title="MainWindow" Height="350" Width="525">
-	<controls:Spectrum
+	<TabControl TabStripPlacement="Left" FontSize="20">
+		<TabItem Header="Settings">
+			
+		</TabItem>
+		<TabItem Header="Visualizer">
+			<controls:Spectrum
 					BarVisibility="Visible"
-							
+					VolumeAndPitch="{Binding VP, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
 					MinimumFrequency="0"
 					MaximumFrequency="2000"
 
 					BlendedFrames="3"/>
+		</TabItem>
+	</TabControl>
 </Window>

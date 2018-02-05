@@ -12,6 +12,7 @@ namespace OpenLED_Host.LEDModeDrivers
 	/// </summary>
 	public class VolumeAndPitchReactive : LEDModeBase
 	{
+		#region Fields
 		private int _BlendedFrames = 3;
 		/// <summary>
 		/// Number of color frames that will be blended
@@ -22,6 +23,7 @@ namespace OpenLED_Host.LEDModeDrivers
 			set
 			{
 				_BlendedFrames = value;
+				NotifyPropertyChanged();
 			}
 		}
 
@@ -36,6 +38,7 @@ namespace OpenLED_Host.LEDModeDrivers
 			set
 			{
 				_ColorsToBlend = value;
+				NotifyPropertyChanged();
 			}
 		}
 
@@ -49,6 +52,7 @@ namespace OpenLED_Host.LEDModeDrivers
 			set
 			{
 				_MaximumFrequency = value;
+				NotifyPropertyChanged();
 			}
 		}
 
@@ -62,9 +66,39 @@ namespace OpenLED_Host.LEDModeDrivers
 			set
 			{
 				_MinimumFrequency = value;
+				NotifyPropertyChanged();
 			}
 		}
-		
+
+		private List<(HSLColor hsl, int p)> _ColorsAndPeaks = new List<(HSLColor hsl, int p)>();
+		/// <summary>
+		/// Contains data for the Colors and Peaks of FFT data
+		/// </summary>
+		public List<(HSLColor hsl, int p)> ColorsAndPeaks
+		{
+			get { return _ColorsAndPeaks; }
+			set
+			{
+				_ColorsAndPeaks = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private HSLColor _AverageColor = new HSLColor(0, 0, 0);
+		/// <summary>
+		/// Average Color of of FFT data
+		/// </summary>
+		public HSLColor AverageColor
+		{
+			get { return _AverageColor; }
+			set
+			{
+				_AverageColor = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		#endregion Fields
 		private Timer ReactiveTimer = new Timer()
 		{
 			Interval = 20
@@ -90,14 +124,13 @@ namespace OpenLED_Host.LEDModeDrivers
 			if (!ticking)
 			{
 				ticking = true;
-				HSLColor t;
-				GenerateColorData(out t);
+				GenerateColorData();
 				ticking = false;
 			}
 			else { }
 		}
 
-		public List<(double,int)> GenerateColorData(out HSLColor AVGColor)
+		public void GenerateColorData()
 		{
 			float[] channelData = new float[(int)Sound_Library.BassEngine.Instance.FFT];
 			Sound_Library.BassEngine.Instance.GetFFTData(channelData);
@@ -110,6 +143,8 @@ namespace OpenLED_Host.LEDModeDrivers
 			int maximumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency);
 			int minimumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
 
+			//only reason we have this is so we can update the ColorsAndPeaks in one swoop, instead of piecemeal
+			List<(HSLColor hsl, int peak)> TempHSLandPeak = new List<(HSLColor hsl, int peak)>();
 
 			for (int i = minimumFrequencyIndex; i <= maximumFrequencyIndex; i++)
 			{
@@ -134,13 +169,15 @@ namespace OpenLED_Host.LEDModeDrivers
 			//If all the data was zeros, then don't update
 			if (!allzeros)
 			{
-				List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumesAndPeaks.Select(x=>x.v).ToList(), .01);
+				List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumesAndPeaks.Select(x => x.v).ToList(), .01);
 				List<HSLColor> TopHSLValues = new List<HSLColor>();
 				for (int i = 0; i < Peaks.Count; i++)
 				{
 					if (Peaks[i] > 0)
 						TopHSLValues.Add(new HSLColor((double)i / VolumesAndPeaks.Count, 1, VolumesAndPeaks[i].v));
 					VolumesAndPeaks[i] = (VolumesAndPeaks[i].v, Peaks[i]);
+
+					TempHSLandPeak.Add((new HSLColor(new HSLColor((double)i / VolumesAndPeaks.Count, 1, VolumesAndPeaks[i].v)), VolumesAndPeaks[i].p));
 				}
 
 				//add current color average to end of list, and remove extras if needed
@@ -150,19 +187,20 @@ namespace OpenLED_Host.LEDModeDrivers
 						ColorsToBlend.RemoveRange(0, 1);
 
 				//average last [BlendedFrames] background colors together
-				AVGColor = GetAVGHSLColor(ColorsToBlend);
-
-				//Write color to all areas
-				ColorOut(AVGColor);
+				AverageColor = GetAVGHSLColor(ColorsToBlend);
 			}
 			else
 			{
 				ColorOut(new HSLColor(0, 0, 0));
-				AVGColor = new HSLColor(0, 0, 0);
+				AverageColor = new HSLColor(0, 0, 0);
 			}
+
+			//Write color to all areas
+			ColorOut(AverageColor);
 			//print the color we're using
-			Console.WriteLine(AVGColor);
-			return VolumesAndPeaks;
+			Console.WriteLine(AverageColor);
+			//update out list of ColorsAndPeaks, which a control depends on
+			ColorsAndPeaks = TempHSLandPeak;
 		}
 
 		/// <summary>

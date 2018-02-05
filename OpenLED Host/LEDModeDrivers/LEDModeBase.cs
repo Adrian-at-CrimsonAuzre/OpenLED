@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OpenLED_Host.LEDModeDrivers
 {
-	public class LEDModeBase
+	public class LEDModeBase : Models.NotifyBase
 	{
 		public static void ColorOut(HSLColor Color)
 		{
