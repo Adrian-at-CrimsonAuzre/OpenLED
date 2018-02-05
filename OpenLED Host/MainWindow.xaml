@@ -11,10 +11,6 @@
 							
 					MinimumFrequency="0"
 					MaximumFrequency="2000"
-							
-					ThresholdWindow="3"
-					ThresholdThreshold="0.1"
-					ThresholdInfluence=".5"
-							
+
 					BlendedFrames="3"/>
 </Window>

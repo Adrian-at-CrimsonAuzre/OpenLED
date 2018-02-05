@@ -116,7 +116,7 @@ namespace OpenLED_Host.LEDModeDrivers
 				//They need reset evert loop anyways
 				double fftBucketHeight = 0f;
 
-				if (channelData[i] > 1e-5)
+				if (channelData[i] > 1e-4)
 					allzeros = false;
 
 				fftBucketHeight = (channelData[i] * scaleFactorLinear);
@@ -134,7 +134,7 @@ namespace OpenLED_Host.LEDModeDrivers
 			//If all the data was zeros, then don't update
 			if (!allzeros)
 			{
-				List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumesAndPeaks.Select(x=>x.v).ToList());
+				List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumesAndPeaks.Select(x=>x.v).ToList(), .01);
 				List<HSLColor> TopHSLValues = new List<HSLColor>();
 				for (int i = 0; i < Peaks.Count; i++)
 				{
@@ -150,7 +150,7 @@ namespace OpenLED_Host.LEDModeDrivers
 						ColorsToBlend.RemoveRange(0, 1);
 
 				//average last [BlendedFrames] background colors together
-				AVGColor = BlendColors();
+				AVGColor = GetAVGHSLColor(ColorsToBlend);
 
 				//Write color to all areas
 				ColorOut(AVGColor);
@@ -164,38 +164,52 @@ namespace OpenLED_Host.LEDModeDrivers
 			Console.WriteLine(AVGColor);
 			return VolumesAndPeaks;
 		}
+
 		/// <summary>
-		/// Blends the colors that have been placed in the ColorsToBlend List
+		/// Gets the Average HSL color from a list
 		/// </summary>
-		/// <returns>A blended color</returns>
-		public HSLColor BlendColors()
-		{
-			HSLColor ret = new HSLColor(0, 1, 0);
-
-			for (int i = 0; i < ColorsToBlend.Count(); i++)
-				ret = new HSLColor((ret.Hue * i + ColorsToBlend[i].Hue) / (i + 1), 1, (ret.Luminosity * i + ColorsToBlend[i].Luminosity) / (i + 1));
-
-			return ret;
-		}
-
+		/// <param name="Colors">List of HSL colors to average</param>
+		/// <returns>An average of all the HSL colors given</returns>
 		public static HSLColor GetAVGHSLColor(List<HSLColor> Colors)
 		{
+			HSLColor ret = new HSLColor(0,0,0);
+			if (Colors.Count > 0)
+			{
+				if (true)
+				{
+					double s = Colors.Average(x => x.Saturation);
+					double l = Colors.Average(x => x.Luminosity);
+					double h = 0;
 
-			double AVGH = 0;
-			for (int i = 0; i < Colors.Count(); i++)
-				if (Colors[i].Luminosity > 0)
-					AVGH = (AVGH * i + Colors[i].Hue) / (i + 1);
+					double a1 = 0;
+					double a2 = 0;
+					for (int i = 0; i < Colors.Count; i++)
+					{
+						a1 += Math.Sin(2 * Math.PI * Colors[i].Hue);
+						a2 += Math.Cos(2 * Math.PI * Colors[i].Hue);
+					}
+					if (a1 != 0 || a2 != 0)
+						h = Math.Atan2(a1, a2) / (2 * Math.PI);
 
-			//Get a good Value for the background color that is related to how "loud" the sound is by selecting the top 10%
-			HSLColor Average = new HSLColor(AVGH, 1, Colors.Count > 0 ? Colors.OrderByDescending(x => x.Luminosity).Take((int)(Math.Round(Colors.Count * .1) > 0 ? Math.Round(Colors.Count * .1) : Colors.Count)).Average(x => x.Luminosity) : 0);
-			if (double.IsNaN(Average.Luminosity))
-				Average.Luminosity = 0;
+					if (h < 0)
+						h++;
+					ret = new HSLColor(h, s, l);
+				}
+				else
+				{
+					double AVGH = 0;
+					for (int i = 0; i < Colors.Count(); i++)
+						if (Colors[i].Luminosity > 0)
+							AVGH = (AVGH * i + Colors[i].Hue) / (i + 1);
 
-			//Leave a breakpoint here. This function once reported an L of 38 and an H of 6 which should be impossible.
-			if (Average.Luminosity > 1 || Average.Hue > 1)
-				Average = Average;
+					//Get a good Value for the background color that is related to how "loud" the sound is by selecting the top 10%
+					ret = new HSLColor(AVGH, 1, Colors.Count > 0 ? Colors.OrderByDescending(x => x.Luminosity).Take((int)(Math.Round(Colors.Count * .1) > 0 ? Math.Round(Colors.Count * .1) : Colors.Count)).Average(x => x.Luminosity) : 0);
+					if (double.IsNaN(ret.Luminosity))
+						ret.Luminosity = 0;
+				}
+			}
 
-			return Average;
+			return ret;
 		}
 
 		/// <summary>
