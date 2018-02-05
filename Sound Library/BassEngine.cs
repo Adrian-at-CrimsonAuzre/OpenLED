@@ -223,7 +223,7 @@ namespace Sound_Library
 		/// <param name="ThresholdThreshold">Filter correction value, default of .1</param>
 		/// <param name="ThresholdInfluence">Changes falloff of detected peak, default of .5</param>
 		/// <returns>List of values (-1, 0, 1) for peak, average, and trough</returns>
-		public static List<int> PeakDetection(List<double> y, int ThresholdWindow = 5, double ThresholdThreshold = 0.1, double ThresholdInfluence = .5)
+		public static List<int> PeakDetection(List<double> y, double MinValue = 0, int ThresholdWindow = 5, double ThresholdThreshold = 0.1, double ThresholdInfluence = .5)
 		{
 			try
 			{
@@ -251,10 +251,12 @@ namespace Sound_Library
 				{
 					if (Math.Abs(y[i] - avgFilter[i - 1]) > ThresholdThreshold * stdFilter[i - 1])
 					{
-						if (y[i] > avgFilter[i - 1])
+						if (y[i] > avgFilter[i - 1] && y[i] > MinValue)
 							signals[i] = 1;
-						else
+						else if (y[i] > MinValue)
 							signals[i] = -1;
+						else
+							signals[i] = 0;
 						FilteredY[i] = ThresholdInfluence * y[i] + (1 - ThresholdInfluence) * FilteredY[i - 1];
 					}
 					else
