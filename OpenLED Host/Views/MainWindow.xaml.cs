@@ -20,15 +20,25 @@ namespace OpenLED_Host.Views
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		public LEDModeDrivers.VolumeAndPitchReactive VP
+		private System.Windows.Forms.NotifyIcon ni = new System.Windows.Forms.NotifyIcon
 		{
-			get;
-			set;
-		} = new LEDModeDrivers.VolumeAndPitchReactive();
+			Icon = new System.Drawing.Icon("Icon.ico"),
+			Visible = false
+		};
+
 		public MainWindow()
 		{
 			InitializeComponent();
-			VP.StartReacting();
+			
+			ni.DoubleClick +=
+				delegate (object sender, EventArgs args)
+				{
+					this.Show();
+					this.WindowState = WindowState.Normal;
+				};
+
+			MainWindowViewModel.VolumeAndPitch.StartReacting();
+
 			Resources.MergedDictionaries.Clear();
 			ResourceDictionary themeResources = Application.LoadComponent(new Uri("ExpressionDark.xaml", UriKind.Relative)) as ResourceDictionary;
 			Resources.MergedDictionaries.Add(themeResources);
@@ -36,7 +46,28 @@ namespace OpenLED_Host.Views
 
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
-			VP.StopReacting();
+			MainWindowViewModel.VolumeAndPitch.StopReacting();
+		}
+
+		private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			MainWindowViewModel.DisableUIElement(Visualizer);
+		}
+		protected override void OnStateChanged(EventArgs e)
+		{
+			if (WindowState == WindowState.Minimized)
+			{
+				this.ShowInTaskbar = false;
+				ni.Visible = true;
+			}
+			else
+			{
+				this.Activate();
+				this.ShowInTaskbar = true;
+				ni.Visible = false;
+			}
+
+			base.OnStateChanged(e);
 		}
 	}
 }

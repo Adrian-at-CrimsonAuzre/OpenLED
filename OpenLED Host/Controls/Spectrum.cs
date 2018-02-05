@@ -29,7 +29,6 @@ namespace OpenLED_Host.Controls
 
 		#region Constants
 		private const int scaleFactorLinear = 5;
-		private const int defaultUpdateInterval = 0;
 		#endregion
 
 		#region Dependency Properties
@@ -690,7 +689,7 @@ namespace OpenLED_Host.Controls
 		{
 			animationTimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle)
 			{
-				Interval = TimeSpan.FromMilliseconds(defaultUpdateInterval),
+				Interval = TimeSpan.FromMilliseconds(10),
 			};
 			animationTimer.Tick += animationTimer_Tick;
 
@@ -715,6 +714,29 @@ namespace OpenLED_Host.Controls
 			UpdateSpectrum();
 		}
 		#endregion
+
+		/// <summary>
+		/// Starts or Stops animating the Spectrum Control
+		/// </summary>
+		/// <param name="ShouldAnimate">Should we be animating?</param>
+		public void AnimatingState(bool ShouldAnimate)
+		{
+			//Only do things if the state is different than our current state
+			if(ShouldAnimate != animationTimer.IsEnabled)
+				if (ShouldAnimate)
+				{
+					animationTimer.Stop();
+					foreach (var c in spectrumCanvas.Children)
+						if (c is Rectangle r)
+							r.Height = 0;
+					spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
+				}
+				else
+				{
+					animationTimer.Start();
+					UpdateSpectrumShapes();
+				}
+		}
 
 		#region Private Drawing Methods
 		DispatcherTimer fpstimer;

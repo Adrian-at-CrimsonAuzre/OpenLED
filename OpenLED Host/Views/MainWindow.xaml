@@ -5,17 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:OpenLED_Host.Views"
 		xmlns:controls="clr-namespace:OpenLED_Host.Controls"
+		xmlns:vm="clr-namespace:OpenLED_Host.ViewModels"
 		mc:Ignorable="d"
 		Closing="Window_Closing"
-        Title="MainWindow" Height="350" Width="525">
-	<TabControl TabStripPlacement="Left" FontSize="20">
+        Title="OpenLED" WindowStartupLocation="CenterOwner" Width="1280" Height="720">
+	<Window.DataContext>
+		<vm:MainWindowViewModel x:Name="MainWindowViewModel"/>
+	</Window.DataContext>
+	<TabControl TabStripPlacement="Left" FontSize="20" SelectedIndex="{Binding TabControlSelected}" SelectionChanged="TabControl_SelectionChanged">
 		<TabItem Header="Settings">
-			
+			<Grid>
+				
+			</Grid>
 		</TabItem>
 		<TabItem Header="Visualizer">
-			<controls:Spectrum
+			<controls:Spectrum x:Name="Visualizer"
 					BarVisibility="Visible"
-					VolumeAndPitch="{Binding VP, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"
+					VolumeAndPitch="{Binding VolumeAndPitch}"
 					MinimumFrequency="0"
 					MaximumFrequency="2000"
 
