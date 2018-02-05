@@ -18,12 +18,12 @@ void loop()
 	byte SerialRGBIn[3];
 
 	//wait for serial comms
-	int resetLEDs = 0;
+	long resetLEDs = 0;
 	while (!Serial.available())
 	{
 		//Set LEDs to black if we haven't gotten sound data
 		resetLEDs++;
-		if (resetLEDs >= 30000)
+		if (resetLEDs >= 100000)
 		{
 			resetLEDs = 0;
 			FastLED.showColor(CRGB(0, 0, 0));
