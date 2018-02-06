@@ -263,8 +263,6 @@ namespace OpenLED_Host.Controls
 		/// <param name="newValue">The new value of <see cref="BlendedFrames"/></param>
 		protected virtual void OnBlendedFramesChanged(int oldValue, int newValue)
 		{
-			if(VolumeAndPitch != null)
-				VolumeAndPitch.BlendedFrames = BlendedFrames;
 			UpdateBarLayout();
 		}
 
@@ -722,8 +720,8 @@ namespace OpenLED_Host.Controls
 		public void AnimatingState(bool ShouldAnimate)
 		{
 			//Only do things if the state is different than our current state
-			if(ShouldAnimate != animationTimer.IsEnabled)
-				if (ShouldAnimate)
+			if(ShouldAnimate == animationTimer.IsEnabled)
+				if (!ShouldAnimate)
 				{
 					animationTimer.Stop();
 					foreach (var c in spectrumCanvas.Children)
@@ -732,10 +730,7 @@ namespace OpenLED_Host.Controls
 					spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
 				}
 				else
-				{
 					animationTimer.Start();
-					UpdateSpectrumShapes();
-				}
 		}
 
 		#region Private Drawing Methods
