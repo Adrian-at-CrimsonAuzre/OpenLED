@@ -27,6 +27,21 @@ namespace OpenLED_Host.LEDModeDrivers
 			}
 		}
 
+		private bool _IsAngleAddition = true;
+		/// <summary>
+		/// Should angle color addition be used? Othewise, use Linear addition.
+		/// Defaults to True
+		/// </summary>
+		public bool IsAngleAddition
+		{
+			get { return _IsAngleAddition; }
+			set
+			{
+				_IsAngleAddition = value;
+				NotifyPropertyChanged();
+			}
+		}
+
 		private List<HSLColor> _ColorsToBlend = new List<HSLColor>();
 		/// <summary>
 		/// Colors to be used for blending
@@ -148,13 +163,11 @@ namespace OpenLED_Host.LEDModeDrivers
 
 			for (int i = minimumFrequencyIndex; i <= maximumFrequencyIndex; i++)
 			{
-				//They need reset evert loop anyways
-				double fftBucketHeight = 0f;
+				double fftBucketHeight = (channelData[i] * scaleFactorLinear);
 
-				if (channelData[i] > 1e-4)
+				if (fftBucketHeight > 1e-4)
 					allzeros = false;
 
-				fftBucketHeight = (channelData[i] * scaleFactorLinear);
 
 				//Keep peaks in range incase weird shit has happened
 				if (fftBucketHeight < 0f)
@@ -208,12 +221,12 @@ namespace OpenLED_Host.LEDModeDrivers
 		/// </summary>
 		/// <param name="Colors">List of HSL colors to average</param>
 		/// <returns>An average of all the HSL colors given</returns>
-		public static HSLColor GetAVGHSLColor(List<HSLColor> Colors)
+		private HSLColor GetAVGHSLColor(List<HSLColor> Colors)
 		{
 			HSLColor ret = new HSLColor(0,0,0);
 			if (Colors.Count > 0)
 			{
-				if (true)
+				if (IsAngleAddition)
 				{
 					double s = Colors.Average(x => x.Saturation);
 					double l = Colors.Average(x => x.Luminosity);
@@ -255,7 +268,7 @@ namespace OpenLED_Host.LEDModeDrivers
 		/// </summary>
 		/// <param name="Data">List of values ranging from 0 to 1, all data out of this range will be give HSLColor(0,0,0)</param>
 		/// <returns>List of HSLColors</returns>
-		public static List<HSLColor> GetHSLColors(List<double> Data)
+		private static List<HSLColor> GetHSLColors(List<double> Data)
 		{
 			List<HSLColor> Colors = new List<HSLColor>();
 
