@@ -38,6 +38,7 @@ namespace OpenLED_Host.Views
 				};
 
 			MainWindowViewModel.VolumeAndPitch.StartReacting();
+			MainWindowViewModel.Visualizer = Visualizer;
 
 			Resources.MergedDictionaries.Clear();
 			ResourceDictionary themeResources = Application.LoadComponent(new Uri("ExpressionDark.xaml", UriKind.Relative)) as ResourceDictionary;
@@ -47,11 +48,6 @@ namespace OpenLED_Host.Views
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
 			MainWindowViewModel.VolumeAndPitch.StopReacting();
-		}
-
-		private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			MainWindowViewModel.DisableUIElement(Visualizer);
 		}
 		protected override void OnStateChanged(EventArgs e)
 		{

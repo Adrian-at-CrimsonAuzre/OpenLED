@@ -6,26 +6,51 @@
 		xmlns:local="clr-namespace:OpenLED_Host.Views"
 		xmlns:controls="clr-namespace:OpenLED_Host.Controls"
 		xmlns:vm="clr-namespace:OpenLED_Host.ViewModels"
+		xmlns:color="clr-namespace:ColorPickerWPF;assembly=ColorPickerWPF"
 		mc:Ignorable="d"
 		Closing="Window_Closing"
         Title="OpenLED" WindowStartupLocation="CenterOwner" Width="1280" Height="720">
 	<Window.DataContext>
 		<vm:MainWindowViewModel x:Name="MainWindowViewModel"/>
 	</Window.DataContext>
-	<TabControl TabStripPlacement="Left" FontSize="20" SelectedIndex="{Binding TabControlSelected}" SelectionChanged="TabControl_SelectionChanged">
+	<TabControl Grid.ColumnSpan="2" Grid.RowSpan="2" TabStripPlacement="Left" FontSize="20" SelectedIndex="{Binding TabControlSelected}">
 		<TabItem Header="Settings">
 			<Grid>
 				
+			</Grid>
+		</TabItem>
+		<TabItem Header="Static">
+			<Grid>
+			</Grid>
+		</TabItem>
+		<TabItem Header="Breathing">
+			<Grid>
+
+			</Grid>
+		</TabItem>
+		<TabItem Header="Strobing">
+			<Grid>
+
+			</Grid>
+		</TabItem>
+		<TabItem Header="Color Cycle">
+			<Grid>
+
+			</Grid>
+		</TabItem>
+		<TabItem Header="Rainbow">
+			<Grid>
+
 			</Grid>
 		</TabItem>
 		<TabItem Header="Visualizer">
 			<controls:Spectrum x:Name="Visualizer"
 					BarVisibility="Visible"
 					VolumeAndPitch="{Binding VolumeAndPitch}"
-					MinimumFrequency="0"
-					MaximumFrequency="2000"
+					MinimumFrequency="{Binding VolumeAndPitch.MinimumFrequency}"
+					MaximumFrequency="{Binding VolumeAndPitch.MaximumFrequency}"
 
-					BlendedFrames="3"/>
+					BlendedFrames="{Binding VolumeAndPitch.BlendedFrames}"/>
 		</TabItem>
 	</TabControl>
 </Window>

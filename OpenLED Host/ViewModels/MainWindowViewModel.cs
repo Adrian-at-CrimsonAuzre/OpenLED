@@ -25,7 +25,14 @@ namespace OpenLED_Host.ViewModels
 			}
 		}
 
-		private int _TabControlSelected;
+
+		/// <summary>
+		/// Visualizer being displayed to user, only reason it's here is to be able to access some of its methods
+		/// </summary>
+		public Spectrum Visualizer;
+
+
+		private int _TabControlSelected = 0;
 		/// <summary>
 		/// Index of the MainWindo TabControl
 		/// </summary>
@@ -34,6 +41,11 @@ namespace OpenLED_Host.ViewModels
 			get { return _TabControlSelected; }
 			set
 			{
+				//if current tab is 6 and new tab is not 6
+				if (_TabControlSelected == 6 && value != 6)
+					Visualizer.AnimatingState(false);
+				else if (_TabControlSelected != 6 && value == 6)
+					Visualizer.AnimatingState(true);
 				_TabControlSelected = value;
 
 				NotifyPropertyChanged();
@@ -45,13 +57,5 @@ namespace OpenLED_Host.ViewModels
 		{
 
 		}
-
-		public void DisableUIElement(object o)
-		{
-			//disable spectrum when tabcontrol is not rendering it
-			if (o is Spectrum s)
-				s.AnimatingState(TabControlSelected == 1);
-		}
-
 	}
 }
