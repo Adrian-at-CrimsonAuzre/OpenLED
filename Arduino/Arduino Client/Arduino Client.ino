@@ -6,7 +6,8 @@ CRGB leds[NUM_LEDS];
 //TODO: Better Arduino communication
 void setup()
 {
-	Serial.begin(115200);
+	//Max BAUD we can get out of a Nano
+	Serial.begin(2000000);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
 
 	//turn them off when we first start
