@@ -6,7 +6,6 @@
 		xmlns:local="clr-namespace:OpenLED_Host.Views"
 		xmlns:controls="clr-namespace:OpenLED_Host.Controls"
 		xmlns:vm="clr-namespace:OpenLED_Host.ViewModels"
-		xmlns:color="clr-namespace:ColorPickerWPF;assembly=ColorPickerWPF"
 		xmlns:converter="clr-namespace:Factory_Logistics.Converters"
 		mc:Ignorable="d"
 		Closing="Window_Closing"
@@ -24,16 +23,13 @@
 			</Grid>
 		</TabItem>
 		<TabItem Header="Static">
-				<color:ColorPickerControl OnPickColor="ColorPickerControl_OnPickColorOne"/>
 		</TabItem>
 		<TabItem Header="Breathing">
 			<Grid>
-				<color:ColorPickerControl OnPickColor="ColorPickerControl_OnPickColorOne"/>
 			</Grid>
 		</TabItem>
 		<TabItem Header="HeartBeat">
 			<Grid>
-				<color:ColorPickerControl OnPickColor="ColorPickerControl_OnPickColorOne"/>
 			</Grid>
 		</TabItem>
 		<TabItem Header="Strobing">
@@ -42,8 +38,6 @@
 					<ColumnDefinition Width="*"/>
 					<ColumnDefinition Width="*"/>
 				</Grid.ColumnDefinitions>
-				<color:ColorPickerControl Grid.Column="0" OnPickColor="ColorPickerControl_OnPickColorOne"/>
-				<color:ColorPickerControl Grid.Column="1" OnPickColor="ColorPickerControl_OnPickColorTwo"/>
 
 			</Grid>
 		</TabItem>

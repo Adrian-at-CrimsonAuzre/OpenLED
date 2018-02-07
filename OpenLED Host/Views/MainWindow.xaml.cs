@@ -62,14 +62,5 @@ namespace OpenLED_Host.Views
 
 			base.OnStateChanged(e);
 		}
-
-		private void ColorPickerControl_OnPickColorOne(Color color)
-		{
-			MainWindowViewModel.ColorOne = System.Drawing.Color.FromArgb(color.R,color.G,color.B);
-		}
-		private void ColorPickerControl_OnPickColorTwo(Color color)
-		{
-
-		}
 	}
 }

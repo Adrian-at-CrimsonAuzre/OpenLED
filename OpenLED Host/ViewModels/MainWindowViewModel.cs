@@ -11,7 +11,7 @@ namespace OpenLED_Host.ViewModels
 {
 	class MainWindowViewModel : NotifyBase
 	{
-		private LEDModes _LEDMode = LEDModes.NULL;
+		private LEDModes _LEDMode = LEDModes.Off;
 		/// <summary>
 		/// Current LED Mode of the application
 		/// </summary>
@@ -24,6 +24,13 @@ namespace OpenLED_Host.ViewModels
 
 				switch(LEDMode)
 				{
+					case (LEDModes.Off):
+						{
+							VolumeAndPitch.StopReacting();
+							//Write out black
+							LEDModeBase.ColorOut(new HSLColor(0, 0, 0));
+							break;
+						}
 					case (LEDModes.VolumeAndPitchReactive):
 						{
 							VolumeAndPitch.StartReacting();

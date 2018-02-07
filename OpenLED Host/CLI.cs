@@ -41,7 +41,7 @@ namespace OpenLED_Host
 			IsConsoleOpen = true;
 
 			bool helpshown = false;
-			LEDModes ledmode = LEDModes.NULL;
+			LEDModes ledmode = LEDModes.Off;
 			OptionSet options = new OptionSet
 			{
 				{ "OpenLED:" + Environment.NewLine + "\tDesigned to control the LED lighting within a PC" + Environment.NewLine },
