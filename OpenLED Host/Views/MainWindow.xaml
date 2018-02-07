@@ -7,29 +7,43 @@
 		xmlns:controls="clr-namespace:OpenLED_Host.Controls"
 		xmlns:vm="clr-namespace:OpenLED_Host.ViewModels"
 		xmlns:color="clr-namespace:ColorPickerWPF;assembly=ColorPickerWPF"
+		xmlns:converter="clr-namespace:Factory_Logistics.Converters"
 		mc:Ignorable="d"
 		Closing="Window_Closing"
         Title="OpenLED" WindowStartupLocation="CenterOwner" Width="1280" Height="720">
 	<Window.DataContext>
 		<vm:MainWindowViewModel x:Name="MainWindowViewModel"/>
 	</Window.DataContext>
-	<TabControl Grid.ColumnSpan="2" Grid.RowSpan="2" TabStripPlacement="Left" FontSize="20" SelectedIndex="{Binding TabControlSelected}">
+	<Window.Resources>
+		<converter:EnumToStringListConverter x:Key="EnumToStringListConverter"/>
+	</Window.Resources>
+	<TabControl Grid.ColumnSpan="2" Grid.RowSpan="2" TabStripPlacement="Left" FontSize="20" SelectedItem="{Binding TabControlSelected}">
 		<TabItem Header="Settings">
 			<Grid>
-				
+				<ComboBox ItemsSource="{Binding LEDMode, Converter={StaticResource EnumToStringListConverter}}" Text="{Binding LEDMode}" Height="50" Width="100"/>
 			</Grid>
 		</TabItem>
 		<TabItem Header="Static">
-			<Grid>
-			</Grid>
+				<color:ColorPickerControl OnPickColor="ColorPickerControl_OnPickColorOne"/>
 		</TabItem>
 		<TabItem Header="Breathing">
 			<Grid>
-
+				<color:ColorPickerControl OnPickColor="ColorPickerControl_OnPickColorOne"/>
+			</Grid>
+		</TabItem>
+		<TabItem Header="HeartBeat">
+			<Grid>
+				<color:ColorPickerControl OnPickColor="ColorPickerControl_OnPickColorOne"/>
 			</Grid>
 		</TabItem>
 		<TabItem Header="Strobing">
 			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+				<color:ColorPickerControl Grid.Column="0" OnPickColor="ColorPickerControl_OnPickColorOne"/>
+				<color:ColorPickerControl Grid.Column="1" OnPickColor="ColorPickerControl_OnPickColorTwo"/>
 
 			</Grid>
 		</TabItem>

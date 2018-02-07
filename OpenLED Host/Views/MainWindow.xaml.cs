@@ -37,9 +37,6 @@ namespace OpenLED_Host.Views
 					this.WindowState = WindowState.Normal;
 				};
 
-			MainWindowViewModel.VolumeAndPitch.StartReacting();
-			MainWindowViewModel.Visualizer = Visualizer;
-
 			Resources.MergedDictionaries.Clear();
 			ResourceDictionary themeResources = Application.LoadComponent(new Uri("ExpressionDark.xaml", UriKind.Relative)) as ResourceDictionary;
 			Resources.MergedDictionaries.Add(themeResources);
@@ -64,6 +61,15 @@ namespace OpenLED_Host.Views
 			}
 
 			base.OnStateChanged(e);
+		}
+
+		private void ColorPickerControl_OnPickColorOne(Color color)
+		{
+			MainWindowViewModel.ColorOne = System.Drawing.Color.FromArgb(color.R,color.G,color.B);
+		}
+		private void ColorPickerControl_OnPickColorTwo(Color color)
+		{
+
 		}
 	}
 }
