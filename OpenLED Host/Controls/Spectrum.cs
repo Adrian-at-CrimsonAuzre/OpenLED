@@ -692,8 +692,6 @@ namespace OpenLED_Host.Controls
 			animationTimer.Tick += animationTimer_Tick;
 
 			Sound_Library.BassEngine.Instance.PropertyChanged += soundPlayer_PropertyChanged;
-			UpdateBarLayout();
-			animationTimer.Start();
 		}
 		#endregion
 
@@ -709,7 +707,6 @@ namespace OpenLED_Host.Controls
 		{
 			base.OnRender(dc);
 			UpdateBarLayout();
-			UpdateSpectrum();
 		}
 		#endregion
 
@@ -720,7 +717,7 @@ namespace OpenLED_Host.Controls
 		public void AnimatingState(bool ShouldAnimate)
 		{
 			//Only do things if the state is different than our current state
-			if(ShouldAnimate == animationTimer.IsEnabled)
+			if(ShouldAnimate != animationTimer.IsEnabled)
 				if (!ShouldAnimate)
 				{
 					animationTimer.Stop();
@@ -734,20 +731,8 @@ namespace OpenLED_Host.Controls
 		}
 
 		#region Private Drawing Methods
-		DispatcherTimer fpstimer;
-		int fps = 0;
-		int framesSinceLastFPSTick = 0;
 		private void UpdateSpectrum()
 		{
-			if (fpstimer == null)
-			{
-				fpstimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle)
-				{
-					Interval = TimeSpan.FromMilliseconds(250),
-				};
-				fpstimer.Tick += fps_Tick;
-				fpstimer.Start();
-			}
 
 			if (spectrumCanvas == null || spectrumCanvas.RenderSize.Width < 1 || spectrumCanvas.RenderSize.Height < 1)
 				return;
@@ -757,24 +742,9 @@ namespace OpenLED_Host.Controls
 
 			UpdateSpectrumShapes();
 		}
-
-		private void fps_Tick(object sender, EventArgs e)
-		{
-			fps = framesSinceLastFPSTick * 4;
-			framesSinceLastFPSTick = 0;
-		}
-
-		private TextBlock Vals = new TextBlock
-		{
-			Background = new SolidColorBrush(Colors.Transparent),
-			Foreground = new SolidColorBrush(Colors.White),
-			VerticalAlignment = VerticalAlignment.Top,
-			HorizontalAlignment = HorizontalAlignment.Stretch,
-			FontSize = 20
-		};
+		
 		private void UpdateSpectrumShapes()
 		{
-			framesSinceLastFPSTick++;
 			List<(HSLColor hsl, int p)> ColorsAndPeaks = new List<(HSLColor hsl, int p)>(VolumeAndPitch.ColorsAndPeaks);
 			HSLColor AverageColor = VolumeAndPitch.AverageColor;
 
@@ -816,7 +786,6 @@ namespace OpenLED_Host.Controls
 				}
 				spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
 			}
-			Vals.Text = "\t\t\t" + Math.Round(AverageColor.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(AverageColor.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
 
 			if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				animationTimer.Stop();
@@ -847,8 +816,6 @@ namespace OpenLED_Host.Controls
 				spectrumCanvas.Children.Add(barRectangle);
 			}
 			
-			spectrumCanvas.Children.Add(Vals);
-
 			ActualBarWidth = barWidth;
 		}
 		#endregion
