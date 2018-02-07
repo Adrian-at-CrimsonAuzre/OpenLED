@@ -6,6 +6,7 @@
 		xmlns:local="clr-namespace:OpenLED_Host.Views"
 		xmlns:controls="clr-namespace:OpenLED_Host.Controls"
 		xmlns:vm="clr-namespace:OpenLED_Host.ViewModels"
+		xmlns:color="clr-namespace:ColorPickerWPF;assembly=ColorPickerWPF"
 		xmlns:converter="clr-namespace:Factory_Logistics.Converters"
 		mc:Ignorable="d"
 		Closing="Window_Closing"
@@ -23,6 +24,7 @@
 			</Grid>
 		</TabItem>
 		<TabItem Header="Static">
+			<color:ColorPickerControl OnPickColor="ColorPickerControl_OnPickColorOne"/>
 		</TabItem>
 		<TabItem Header="Breathing">
 			<Grid>
