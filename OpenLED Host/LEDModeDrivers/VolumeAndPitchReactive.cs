@@ -178,12 +178,11 @@ namespace OpenLED_Host.LEDModeDrivers
 				//This is used later for calculating colors and positions
 				VolumesAndPeaks.Add((fftBucketHeight, 0));
 			}
-
+			List<HSLColor> TopHSLValues = new List<HSLColor>();
 			//If all the data was zeros, then don't update
 			if (!allzeros)
 			{
 				List<int> Peaks = Sound_Library.BassEngine.PeakDetection(VolumesAndPeaks.Select(x => x.v).ToList(), .01);
-				List<HSLColor> TopHSLValues = new List<HSLColor>();
 				for (int i = 0; i < Peaks.Count; i++)
 				{
 					if (Peaks[i] > 0)
@@ -192,21 +191,22 @@ namespace OpenLED_Host.LEDModeDrivers
 
 					TempHSLandPeak.Add((new HSLColor(new HSLColor((double)i / VolumesAndPeaks.Count, 1, VolumesAndPeaks[i].v)), VolumesAndPeaks[i].p));
 				}
-
-				//add current color average to end of list, and remove extras if needed
-				ColorsToBlend.Add(GetAVGHSLColor(TopHSLValues));
-				if (ColorsToBlend.Count() > BlendedFrames + 1)
-					for (int i = ColorsToBlend.Count(); i > BlendedFrames + 1; i--)
-						ColorsToBlend.RemoveRange(0, 1);
-
-				//average last [BlendedFrames] background colors together
-				AverageColor = GetAVGHSLColor(ColorsToBlend);
 			}
 			else
 			{
-				ColorOut(new HSLColor(0, 0, 0));
-				AverageColor = new HSLColor(0, 0, 0);
+				//Zero out TopHSL
+				TopHSLValues.Add(new HSLColor(0, 0, 0));
+				TempHSLandPeak = Enumerable.Repeat<(HSLColor, int)>((new HSLColor(0, 0, 0), 0), minimumFrequencyIndex - maximumFrequencyIndex).ToList();
 			}
+			//add current color average to end of list, and remove extras if needed
+			ColorsToBlend.Add(GetAVGHSLColor(TopHSLValues));
+			if (ColorsToBlend.Count() > BlendedFrames + 1)
+				for (int i = ColorsToBlend.Count(); i > BlendedFrames + 1; i--)
+					ColorsToBlend.RemoveRange(0, 1);
+
+			//average last [BlendedFrames] background colors together
+			AverageColor = GetAVGHSLColor(ColorsToBlend);
+						
 
 			//Write color to all areas
 			ColorOut(AverageColor);

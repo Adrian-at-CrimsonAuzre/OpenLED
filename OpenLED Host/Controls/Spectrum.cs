@@ -775,37 +775,49 @@ namespace OpenLED_Host.Controls
 		private void UpdateSpectrumShapes()
 		{
 			framesSinceLastFPSTick++;
-
+			List<(HSLColor hsl, int p)> ColorsAndPeaks = new List<(HSLColor hsl, int p)>(VolumeAndPitch.ColorsAndPeaks);
+			HSLColor AverageColor = VolumeAndPitch.AverageColor;
 
 			//If nothing is playing, then don't update
-			if (VolumeAndPitch.AverageColor != new HSLColor(0, 0, 0) && VolumeAndPitch.ColorsAndPeaks.Count >0)
+			if (AverageColor != new HSLColor(0, 0, 0) && ColorsAndPeaks.Count > 0)
 			{
 				for (int i = 0; i < BarCount; i++)
 				{
-					double barHeight = VolumeAndPitch.ColorsAndPeaks[i].hsl.Luminosity * spectrumCanvas.RenderSize.Height;
+					double barHeight = ColorsAndPeaks[i].hsl.Luminosity * spectrumCanvas.RenderSize.Height;
 					
 					((Rectangle)spectrumCanvas.Children[i]).Margin = new Thickness((barWidth * i) + 1, (spectrumCanvas.RenderSize.Height - 1) - barHeight, 0, 0);
 					((Rectangle)spectrumCanvas.Children[i]).Height = barHeight;
 
 					//Add white border to the peaks on the UI, to show what's being used in the color calculation.
 					//Was originally for diagnostic, but it looks neat.
-					if (VolumeAndPitch.ColorsAndPeaks[i].p > 0)
+					if (ColorsAndPeaks[i].p > 0)
 						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 2;
 					else
 						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 0;
 					
 					//Set color for the rectangles
-					System.Drawing.Color RGB = new HSLColor((double)i / BarCount, 1, VolumeAndPitch.ColorsAndPeaks[i].hsl.Luminosity);
+					System.Drawing.Color RGB = new HSLColor((double)i / BarCount, 1, ColorsAndPeaks[i].hsl.Luminosity);
 					((Rectangle)spectrumCanvas.Children[i]).Fill = new SolidColorBrush(Color.FromRgb(RGB.R, RGB.G, RGB.B));
 				}				
 
 				//convert for solid brush
-				Color AVG_RGB = Color.FromArgb(255, VolumeAndPitch.AverageColor.ToColor().R, VolumeAndPitch.AverageColor.ToColor().G, VolumeAndPitch.AverageColor.ToColor().B);
-				spectrumCanvas.Background = new SolidColorBrush(Color.FromRgb((byte)AVG_RGB.R, (byte)AVG_RGB.G, (byte)AVG_RGB.B));
+				Color AVG_RGB = Color.FromArgb(255, AverageColor.ToColor().R, AverageColor.ToColor().G, AverageColor.ToColor().B);
+				spectrumCanvas.Background = new SolidColorBrush(Color.FromRgb(AVG_RGB.R, AVG_RGB.G, AVG_RGB.B));
 
 				//Display stats
-				Vals.Text = "\t\t\t" + Math.Round(VolumeAndPitch.AverageColor.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(VolumeAndPitch.AverageColor.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
 			}
+			else
+			{
+				for (int i = 0; i < BarCount; i++)
+				{
+					((Rectangle)spectrumCanvas.Children[i]).Margin = new Thickness((barWidth * i) + 1, (spectrumCanvas.RenderSize.Height - 1), 0, 0);
+					((Rectangle)spectrumCanvas.Children[i]).Height = 0;					
+					((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 0;
+				}
+				spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
+			}
+			Vals.Text = "\t\t\t" + Math.Round(AverageColor.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(AverageColor.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
+
 			if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				animationTimer.Stop();
 		}
