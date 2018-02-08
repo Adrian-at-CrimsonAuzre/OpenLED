@@ -196,7 +196,7 @@ namespace OpenLED_Host.LEDModeDrivers
 			{
 				//Zero out TopHSL
 				TopHSLValues.Add(new HSLColor(0, 0, 0));
-				TempHSLandPeak = Enumerable.Repeat<(HSLColor, int)>((new HSLColor(0, 0, 0), 0), minimumFrequencyIndex - maximumFrequencyIndex).ToList();
+				TempHSLandPeak = Enumerable.Repeat<(HSLColor, int)>((new HSLColor(0, 0, 0), 0), maximumFrequencyIndex - minimumFrequencyIndex).ToList();
 			}
 			//add current color average to end of list, and remove extras if needed
 			ColorsToBlend.Add(GetAVGHSLColor(TopHSLValues));
