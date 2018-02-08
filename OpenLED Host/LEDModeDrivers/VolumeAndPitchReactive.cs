@@ -13,7 +13,7 @@ namespace OpenLED_Host.LEDModeDrivers
 	public class VolumeAndPitchReactive : LEDModeBase
 	{
 		#region Fields
-		private int _BlendedFrames = 3;
+		private int _BlendedFrames = 10;
 		/// <summary>
 		/// Number of color frames that will be blended
 		/// </summary>
@@ -27,20 +27,78 @@ namespace OpenLED_Host.LEDModeDrivers
 			}
 		}
 
-		private bool _IsAngleAddition = true;
-		/// <summary>
-		/// Should angle color addition be used? Othewise, use Linear addition.
-		/// Defaults to True
-		/// </summary>
-		public bool IsAngleAddition
+		public enum ColorCalculationModes
 		{
-			get { return _IsAngleAddition; }
+			/// <summary>
+			/// Linear Calculation using raw averages.
+			/// </summary>
+			Linear,
+			/// <summary>
+			/// Uses polar coordinates to find a more propper color mix
+			/// </summary>
+			Angular,
+			/// <summary>
+			/// Linear Calculation using raw averages BUT values are scaled through the magic of vectors
+			/// </summary>
+			VectorLinear,
+			/// <summary>
+			/// Uses polar coordinates to find a more propper color mix AND uses volume to determine mixing %
+			/// </summary>
+			VectorAngular
+		}
+
+		private ColorCalculationModes _ColorCalculationMode = ColorCalculationModes.VectorAngular;
+		/// <summary>
+		/// Mode color should be calculated in
+		/// </summary>
+		public ColorCalculationModes ColorCalculationMode
+		{
+			get { return _ColorCalculationMode; }
 			set
 			{
-				_IsAngleAddition = value;
+				_ColorCalculationMode = value;
 				NotifyPropertyChanged();
 			}
 		}
+
+		public enum BrightnessCalculationModes
+		{
+			/// <summary>
+			/// Averages all brightnesses, good for slow music
+			/// </summary>
+			Average,
+			/// <summary>
+			/// Averages top 50% of all brightnesses
+			/// </summary>
+			Top50,
+			/// <summary>
+			/// Averages top 25% of all brightnesses
+			/// </summary>
+			Top25,
+			/// <summary>
+			/// Averages top 10% of all brightnesses
+			/// </summary>
+			Top10,
+			/// <summary>
+			/// Takes BlendedFrames/2 LATEST frames, much more reactive than any of the averaging settings
+			/// </summary>
+			BlendedOver2
+		}
+
+		private BrightnessCalculationModes _BrightnessCalculationMode = BrightnessCalculationModes.Top25;
+		/// <summary>
+		/// Mode Brightness should be calculated in
+		/// </summary>
+		public BrightnessCalculationModes BrightnessCalculationMode
+		{
+			get { return _BrightnessCalculationMode; }
+			set
+			{
+				_BrightnessCalculationMode = value;
+				NotifyPropertyChanged();
+			}
+		}
+
 
 		private List<HSLColor> _ColorsToBlend = new List<HSLColor>();
 		/// <summary>
@@ -199,13 +257,13 @@ namespace OpenLED_Host.LEDModeDrivers
 				TempHSLandPeak = Enumerable.Repeat<(HSLColor, int)>((new HSLColor(0, 0, 0), 0), maximumFrequencyIndex - minimumFrequencyIndex).ToList();
 			}
 			//add current color average to end of list, and remove extras if needed
-			ColorsToBlend.Add(GetAVGHSLColor(TopHSLValues));
+			ColorsToBlend.Add(GetAVGHSLColor(TopHSLValues, ColorCalculationMode, BrightnessCalculationMode));
 			if (ColorsToBlend.Count() > BlendedFrames + 1)
 				for (int i = ColorsToBlend.Count(); i > BlendedFrames + 1; i--)
 					ColorsToBlend.RemoveRange(0, 1);
 
 			//average last [BlendedFrames] background colors together
-			AverageColor = GetAVGHSLColor(ColorsToBlend);
+			AverageColor = GetAVGHSLColor(ColorsToBlend, ColorCalculationMode, BrightnessCalculationModes.BlendedOver2);
 						
 
 			//Write color to all areas
@@ -221,45 +279,112 @@ namespace OpenLED_Host.LEDModeDrivers
 		/// </summary>
 		/// <param name="Colors">List of HSL colors to average</param>
 		/// <returns>An average of all the HSL colors given</returns>
-		private HSLColor GetAVGHSLColor(List<HSLColor> Colors)
+		private HSLColor GetAVGHSLColor(List<HSLColor> Colors, ColorCalculationModes color, BrightnessCalculationModes brightness)
 		{
-			HSLColor ret = new HSLColor(0,0,0);
+			HSLColor ret = new HSLColor(0,1,0);
 			if (Colors.Count > 0)
 			{
-				if (IsAngleAddition)
+
+				switch (color)
 				{
-					double s = Colors.Average(x => x.Saturation);
-					double l = Colors.Average(x => x.Luminosity);
-					double h = 0;
+					case (ColorCalculationModes.Angular):
+						{
+							double s = Colors.Average(x => x.Saturation);
+							double l = Colors.Average(x => x.Luminosity);
+							double h = 0;
 
-					double a1 = 0;
-					double a2 = 0;
-					for (int i = 0; i < Colors.Count; i++)
-					{
-						a1 += Math.Sin(2 * Math.PI * Colors[i].Hue);
-						a2 += Math.Cos(2 * Math.PI * Colors[i].Hue);
-					}
-					if (a1 != 0 || a2 != 0)
-						h = Math.Atan2(a1, a2) / (2 * Math.PI);
+							double a1 = 0;
+							double a2 = 0;
+							for (int i = 0; i < Colors.Count; i++)
+							{
+								a1 += Math.Sin(2 * Math.PI * Colors[i].Hue);
+								a2 += Math.Cos(2 * Math.PI * Colors[i].Hue);
+							}
+							if (a1 != 0 || a2 != 0)
+								h = Math.Atan2(a1, a2) / (2 * Math.PI);
 
-					if (h < 0)
-						h++;
-					ret = new HSLColor(h, s, l);
+							if (h < 0)
+								h++;
+							ret = new HSLColor(h, s, l);
+							break;
+						}
+					case (ColorCalculationModes.Linear):
+						{
+							double AVGH = 0;
+							for (int i = 0; i < Colors.Count(); i++)
+								if (Colors[i].Luminosity > 0)
+									AVGH = (AVGH * i + Colors[i].Hue) / (i + 1);
+
+							//Get a good Value for the background color that is related to how "loud" the sound is by selecting the top 10%
+							ret = new HSLColor(AVGH, 1, Colors.Count > 0 ? Colors.OrderByDescending(x => x.Luminosity).Take((int)(Math.Round(Colors.Count * .1) > 0 ? Math.Round(Colors.Count * .1) : Colors.Count)).Average(x => x.Luminosity) : 0);
+							if (double.IsNaN(ret.Luminosity))
+								ret.Luminosity = 0;
+							break;
+						}
+					case (ColorCalculationModes.VectorAngular):
+						{
+							List<double> x = new List<double>();
+							List<double> y = new List<double>();
+							foreach (var c in Colors)
+							{
+								x.Add(c.Luminosity * Math.Cos(c.Hue * 2 * Math.PI));
+								y.Add(c.Luminosity * Math.Sin(c.Hue * 2 * Math.PI));
+							}
+
+							double AverageX = x.Average();
+							double AverageY = y.Average();
+
+							double r = Math.Sqrt(Math.Pow(AverageX, 2) + Math.Pow(AverageY, 2));
+							double theta = Math.Atan(AverageY / AverageX);
+							if (theta < 0 && theta > -Math.PI)
+								theta = theta + Math.PI;
+							if (AverageX < 0)
+								theta = theta + Math.PI;
+
+							if (double.IsNaN(theta))
+								theta = 0;
+							ret.Hue = theta / (2 * Math.PI);
+
+							break;
+						}
+					case (ColorCalculationModes.VectorLinear):
+						{
+							//TODO: VectorLinear color calc
+							break;
+						}
 				}
-				else
+				
+				switch(brightness)
 				{
-					double AVGH = 0;
-					for (int i = 0; i < Colors.Count(); i++)
-						if (Colors[i].Luminosity > 0)
-							AVGH = (AVGH * i + Colors[i].Hue) / (i + 1);
-
-					//Get a good Value for the background color that is related to how "loud" the sound is by selecting the top 10%
-					ret = new HSLColor(AVGH, 1, Colors.Count > 0 ? Colors.OrderByDescending(x => x.Luminosity).Take((int)(Math.Round(Colors.Count * .1) > 0 ? Math.Round(Colors.Count * .1) : Colors.Count)).Average(x => x.Luminosity) : 0);
-					if (double.IsNaN(ret.Luminosity))
-						ret.Luminosity = 0;
+					case (BrightnessCalculationModes.Average):
+						{
+							ret.Luminosity = Colors.Average(z => z.Luminosity);
+							break;
+						}
+					case (BrightnessCalculationModes.BlendedOver2):
+						{
+							Colors.Reverse();
+							ret.Luminosity = Colors.Take(BlendedFrames/2 > .5 ? 1: BlendedFrames/2).Average(z=>z.Luminosity);
+							break;
+						}
+					case (BrightnessCalculationModes.Top10):
+						{
+							ret.Luminosity = Colors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(Colors.Count * .1 < .5 ? 1 : Colors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							break;
+						}
+					case (BrightnessCalculationModes.Top25):
+						{
+							ret.Luminosity = Colors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(Colors.Count * .25 < .5 ? 1 : Colors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							break;
+						}
+					case (BrightnessCalculationModes.Top50):
+						{
+							ret.Luminosity = Colors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(Colors.Count * .5 < .5 ? 1 : Colors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							break;
+						}
 				}
+				
 			}
-
 			return ret;
 		}
 
