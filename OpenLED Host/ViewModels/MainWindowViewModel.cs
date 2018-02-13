@@ -91,7 +91,7 @@ namespace OpenLED_Host.ViewModels
 			get { return _TabControlSelected; }
 			set
 			{
-				if(LEDMode == LEDModes.VolumeAndPitchReactive)
+				if(LEDMode == LEDModes.ColorReactive)
 					//If the current item is the visualizer, and we're switching away from it, turn it off
 					if ((string)value.Header != "Visualizer" && TabControlSelected != null && (string)TabControlSelected.Header == "Visualizer")
 						(TabControlSelected.Content as Spectrum).AnimatingState(false);

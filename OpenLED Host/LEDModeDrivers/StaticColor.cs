@@ -17,8 +17,10 @@ namespace OpenLED_Host.LEDModeDrivers
 				case (nameof(Properties.Settings.Default.LEDMode)):
 				case (nameof(Properties.Settings.Default.ColorOne)):
 					{
-						if(Properties.Settings.Default.LEDMode == LEDModes.SingleColor)
+						if (Properties.Settings.Default.LEDMode == LEDModes.StaticColor)
 							LEDModeBase.ColorOut(Properties.Settings.Default.ColorOne);
+						else if (Properties.Settings.Default.LEDMode == LEDModes.Off)
+							LEDModeBase.ColorOut(new HSLColor(0, 0.0, 0));
 						break;
 					}
 			}

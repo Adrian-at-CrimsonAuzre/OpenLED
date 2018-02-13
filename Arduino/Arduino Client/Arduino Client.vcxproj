@@ -76,6 +76,9 @@
   <ItemGroup>
     <None Include="Arduino Client.ino" />
   </ItemGroup>
+    <ItemGroup>
+    <None Include="Types.h" />
+  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.Arduino Client.vsarduino.h" />
   </ItemGroup>

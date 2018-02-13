@@ -187,7 +187,7 @@ namespace OpenLED_Host.LEDModeDrivers
 		private void ReactiveTimer_Tick(object sender, EventArgs e)
 		{
 			//Check to see if this mode is enabled, otherwise don't run
-			if (Properties.Settings.Default.LEDMode == LEDModes.VolumeAndPitchReactive && !ticking)
+			if (Properties.Settings.Default.LEDMode == LEDModes.ColorReactive && !ticking)
 			{
 				ticking = true;
 				GenerateColorData();
@@ -260,7 +260,8 @@ namespace OpenLED_Host.LEDModeDrivers
 						
 
 			//Write color to all areas
-			ColorOut(AverageColor);
+			if(Properties.Settings.Default.LEDMode == LEDModes.ColorReactive)
+				ColorOut(AverageColor);
 			//print the color we're using
 			Console.WriteLine(AverageColor);
 			//update out list of ColorsAndPeaks, which a control depends on

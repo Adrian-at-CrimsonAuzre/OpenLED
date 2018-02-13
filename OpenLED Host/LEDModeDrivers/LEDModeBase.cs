@@ -10,7 +10,7 @@ namespace OpenLED_Host.LEDModeDrivers
 	{
 		public static void ColorOut(HSLColor Color)
 		{
-			Arduino_Host.WriteColor.RGB(Color.ToColor());
+			Arduino_Host.WriteColor.SingleRGB((byte)Properties.Settings.Default.LEDMode, Color.ToColor());
 		}
 
 		public LEDModeBase()
