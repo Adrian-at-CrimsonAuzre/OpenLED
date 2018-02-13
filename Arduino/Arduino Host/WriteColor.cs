@@ -15,6 +15,10 @@ namespace Arduino_Host
     public static class WriteColor
     {
 		/// <summary>
+		/// Baud rate of arduino communication
+		/// </summary>
+		public static int BaudRate = 2000000;
+		/// <summary>
 		/// Sends an Arduino Light Controller RGB color data.
 		/// </summary>
 		/// <param name="color">RGB Color to send</param>
@@ -30,7 +34,7 @@ namespace Arduino_Host
 					if (string.IsNullOrEmpty(COMPort) || !SerialPort.GetPortNames().Contains(COMPort))
 						COMPort = SerialPort.GetPortNames().First();
 
-					using (SerialPort serial = new SerialPort(COMPort, 115200))
+					using (SerialPort serial = new SerialPort(COMPort, BaudRate))
 					{
 						serial.Open();
 						serial.Write(new byte[] { color.R, color.G, color.B }, 0, 3);

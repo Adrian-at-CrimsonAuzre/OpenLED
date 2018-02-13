@@ -1,42 +1,46 @@
-﻿using System;
+﻿using Microsoft.Shell;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace OpenLED_Host
 {
 	/// <summary>
 	/// Interaction logic for App.xaml
 	/// </summary>
-	public partial class App : Application
+	public partial class App : Application, ISingleInstanceApp
 	{
-		/// <summary>
-		/// Used primarily to determine if MessageBoxes should be shown
-		/// </summary>
-		public bool IsGUIEnabled = true;
-
-		protected override void OnStartup(StartupEventArgs e)
+		private const string Unique = "OpenLED_Host_Unique_String";
+		[STAThread]
+		public static void Main()
 		{
-			//do normal startup
-			base.OnStartup(e);
+			if (SingleInstance<App>.InitializeAsFirstInstance(Unique))
+			{
+				var application = new App();
 
-			//if there are arguments, then launch the CLI version of application
-			if (e.Args.Length == 0)
-			{
-				//Launch GUI
-				ConsoleAllocator.HideConsoleWindow();
-				new MainWindow().ShowDialog();
+				application.InitializeComponent();
+				application.Run();
+
+				// Allow single instance code to perform cleanup operations
+				SingleInstance<App>.Cleanup();
 			}
-			else
-			{
-				IsGUIEnabled = false;
-				//Do command line stuff
-				CLI cli = new CLI(e.Args);
-			}
-			Shutdown();
 		}
+
+		#region ISingleInstanceApp Members
+
+		public bool SignalExternalCommandLineArgs(IList<string> args)
+		{
+			//If someone tried to relaunch the app, bring us to the front
+			Application.Current.MainWindow.WindowState = WindowState.Normal;
+			Application.Current.MainWindow.Activate();
+			return true;
+		}
+
+		#endregion
 	}
 }

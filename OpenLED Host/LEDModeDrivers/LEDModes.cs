@@ -2,7 +2,7 @@
 {
 	public enum LEDModes
 	{
-		NULL,
+		Off,
 		VolumeAndPitchReactive,
 		SingleColor
 	}

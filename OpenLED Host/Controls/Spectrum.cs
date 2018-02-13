@@ -25,12 +25,10 @@ namespace OpenLED_Host.Controls
 		private Canvas spectrumCanvas;
 		private double barWidth = 1;
 		private int BarCount;
-		LEDModeDrivers.VolumeAndPitchReactive VolumeAndPitch = new LEDModeDrivers.VolumeAndPitchReactive();
 		#endregion
 
 		#region Constants
 		private const int scaleFactorLinear = 5;
-		private const int defaultUpdateInterval = 0;
 		#endregion
 
 		#region Dependency Properties
@@ -265,7 +263,6 @@ namespace OpenLED_Host.Controls
 		/// <param name="newValue">The new value of <see cref="BlendedFrames"/></param>
 		protected virtual void OnBlendedFramesChanged(int oldValue, int newValue)
 		{
-			VolumeAndPitch.BlendedFrames = BlendedFrames;
 			UpdateBarLayout();
 		}
 
@@ -407,66 +404,64 @@ namespace OpenLED_Host.Controls
 		}
 		#endregion
 
-		#region RefreshRate
+		#region VolumeAndPitch
 		/// <summary>
-		/// Identifies the <see cref="RefreshInterval" /> dependency property. 
+		/// Identifies the <see cref="VolumeAndPitch" /> dependency property. 
 		/// </summary>
-		public static readonly DependencyProperty RefreshIntervalProperty = DependencyProperty.Register("RefreshInterval", typeof(int), typeof(Spectrum), new UIPropertyMetadata(defaultUpdateInterval, OnRefreshIntervalChanged, OnCoerceRefreshInterval));
+		public static readonly DependencyProperty VolumeAndPitchProperty = DependencyProperty.Register("VolumeAndPitch", typeof(LEDModeDrivers.VolumeAndPitchReactive), typeof(Spectrum), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnVolumeAndPitchChanged, OnCoerceVolumeAndPitch));
 
-		private static object OnCoerceRefreshInterval(DependencyObject o, object value)
+		private static object OnCoerceVolumeAndPitch(DependencyObject o, object value)
 		{
 			Spectrum spectrum = o as Spectrum;
 			if (spectrum != null)
-				return spectrum.OnCoerceRefreshInterval((int)value);
+				return spectrum.OnCoerceVolumeAndPitch((LEDModeDrivers.VolumeAndPitchReactive)value);
 			else
 				return value;
 		}
 
-		private static void OnRefreshIntervalChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		private static void OnVolumeAndPitchChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			Spectrum spectrum = o as Spectrum;
 			if (spectrum != null)
-				spectrum.OnRefreshIntervalChanged((int)e.OldValue, (int)e.NewValue);
+				spectrum.OnVolumeAndPitchChanged((LEDModeDrivers.VolumeAndPitchReactive)e.OldValue, (LEDModeDrivers.VolumeAndPitchReactive)e.NewValue);
 		}
 
 		/// <summary>
-		/// Coerces the value of <see cref="RefreshInterval"/> when a new value is applied.
+		/// Coerces the value of <see cref="VolumeAndPitch"/> when a new value is applied.
 		/// </summary>
-		/// <param name="value">The value that was set on <see cref="RefreshInterval"/></param>
-		/// <returns>The adjusted value of <see cref="RefreshInterval"/></returns>
-		protected virtual int OnCoerceRefreshInterval(int value)
+		/// <param name="value">The value that was set on <see cref="VolumeAndPitch"/></param>
+		/// <returns>The adjusted value of <see cref="VolumeAndPitch"/></returns>
+		protected virtual LEDModeDrivers.VolumeAndPitchReactive OnCoerceVolumeAndPitch(LEDModeDrivers.VolumeAndPitchReactive value)
 		{
-			value = Math.Min(1000, Math.Max(1, value));
 			return value;
 		}
 
 		/// <summary>
-		/// Called after the <see cref="RefreshInterval"/> value has changed.
+		/// Called after the <see cref="VolumeAndPitch"/> value has changed.
 		/// </summary>
-		/// <param name="oldValue">The previous value of <see cref="RefreshInterval"/></param>
-		/// <param name="newValue">The new value of <see cref="RefreshInterval"/></param>
-		protected virtual void OnRefreshIntervalChanged(int oldValue, int newValue)
+		/// <param name="oldValue">The previous value of <see cref="VolumeAndPitch"/></param>
+		/// <param name="newValue">The new value of <see cref="VolumeAndPitch"/></param>
+		protected virtual void OnVolumeAndPitchChanged(LEDModeDrivers.VolumeAndPitchReactive oldValue, LEDModeDrivers.VolumeAndPitchReactive newValue)
 		{
-			animationTimer.Interval = TimeSpan.FromMilliseconds(newValue);
+			UpdateBarLayout();
 		}
 
 		/// <summary>
-		/// Gets or sets the refresh interval, in milliseconds, of the Spectrum Analyzer.
+		/// Gets or sets the maximum display frequency (right side) for the spectrum analyzer.
 		/// </summary>
-		/// <remarks>
-		/// The valid range of the interval is 10 milliseconds to 1000 milliseconds.
-		/// </remarks>
+		/// <remarks>In usual practice, this value should be somewhere between 0 and half of the maximum sample rate. If using
+		/// the maximum sample rate, this would be roughly 22000.</remarks>
 		[Category("Common")]
-		public int RefreshInterval
+		public LEDModeDrivers.VolumeAndPitchReactive VolumeAndPitch
 		{
-			// IMPORTANT: To maintain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
+			// IMPORTANT: To maLEDModeDrivers.VolumeAndPitchReactiveain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
 			get
 			{
-				return (int)GetValue(RefreshIntervalProperty);
+				return (LEDModeDrivers.VolumeAndPitchReactive)GetValue(VolumeAndPitchProperty);
 			}
 			set
 			{
-				SetValue(RefreshIntervalProperty, value);
+				SetValue(VolumeAndPitchProperty, value);
 			}
 		}
 		#endregion
@@ -692,13 +687,11 @@ namespace OpenLED_Host.Controls
 		{
 			animationTimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle)
 			{
-				Interval = TimeSpan.FromMilliseconds(defaultUpdateInterval),
+				Interval = TimeSpan.FromMilliseconds(10),
 			};
 			animationTimer.Tick += animationTimer_Tick;
 
 			Sound_Library.BassEngine.Instance.PropertyChanged += soundPlayer_PropertyChanged;
-			UpdateBarLayout();
-			animationTimer.Start();
 		}
 		#endregion
 
@@ -714,25 +707,32 @@ namespace OpenLED_Host.Controls
 		{
 			base.OnRender(dc);
 			UpdateBarLayout();
-			UpdateSpectrum();
 		}
 		#endregion
 
+		/// <summary>
+		/// Starts or Stops animating the Spectrum Control
+		/// </summary>
+		/// <param name="ShouldAnimate">Should we be animating?</param>
+		public void AnimatingState(bool ShouldAnimate)
+		{
+			//Only do things if the state is different than our current state
+			if(ShouldAnimate != animationTimer.IsEnabled)
+				if (!ShouldAnimate)
+				{
+					animationTimer.Stop();
+					foreach (var c in spectrumCanvas.Children)
+						if (c is Rectangle r)
+							r.Height = 0;
+					spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
+				}
+				else
+					animationTimer.Start();
+		}
+
 		#region Private Drawing Methods
-		DispatcherTimer fpstimer;
-		int fps = 0;
-		int framesSinceLastFPSTick = 0;
 		private void UpdateSpectrum()
 		{
-			if (fpstimer == null)
-			{
-				fpstimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle)
-				{
-					Interval = TimeSpan.FromMilliseconds(250),
-				};
-				fpstimer.Tick += fps_Tick;
-				fpstimer.Start();
-			}
 
 			if (spectrumCanvas == null || spectrumCanvas.RenderSize.Width < 1 || spectrumCanvas.RenderSize.Height < 1)
 				return;
@@ -742,60 +742,51 @@ namespace OpenLED_Host.Controls
 
 			UpdateSpectrumShapes();
 		}
-
-		private void fps_Tick(object sender, EventArgs e)
-		{
-			fps = framesSinceLastFPSTick * 4;
-			framesSinceLastFPSTick = 0;
-		}
-
-		private TextBlock Vals = new TextBlock
-		{
-			Background = new SolidColorBrush(Colors.Transparent),
-			Foreground = new SolidColorBrush(Colors.White),
-			VerticalAlignment = VerticalAlignment.Top,
-			HorizontalAlignment = HorizontalAlignment.Stretch,
-			FontSize = 20
-		};
+		
 		private void UpdateSpectrumShapes()
 		{
-			framesSinceLastFPSTick++;
-
-			HSLColor Background = new HSLColor();
-			List<(double v, int p)> VolumeAndPeaks = VolumeAndPitch.GenerateColorData(out Background);
+			List<(HSLColor hsl, int p)> ColorsAndPeaks = new List<(HSLColor hsl, int p)>(VolumeAndPitch.ColorsAndPeaks);
+			HSLColor AverageColor = VolumeAndPitch.AverageColor;
 
 			//If nothing is playing, then don't update
-			if (Background != new HSLColor(0, 0, 0))
+			if (AverageColor != new HSLColor(0, 0, 0) && ColorsAndPeaks.Count > 0)
 			{
 				for (int i = 0; i < BarCount; i++)
 				{
-					double barHeight = VolumeAndPeaks[i].v * spectrumCanvas.RenderSize.Height;
+					double barHeight = ColorsAndPeaks[i].hsl.Luminosity * spectrumCanvas.RenderSize.Height;
 					
 					((Rectangle)spectrumCanvas.Children[i]).Margin = new Thickness((barWidth * i) + 1, (spectrumCanvas.RenderSize.Height - 1) - barHeight, 0, 0);
 					((Rectangle)spectrumCanvas.Children[i]).Height = barHeight;
 
 					//Add white border to the peaks on the UI, to show what's being used in the color calculation.
 					//Was originally for diagnostic, but it looks neat.
-					if (VolumeAndPeaks[i].p > 0)
+					if (ColorsAndPeaks[i].p > 0)
 						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 2;
 					else
 						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 0;
 					
 					//Set color for the rectangles
-					System.Drawing.Color RGB = new HSLColor((double)i / BarCount, 1, VolumeAndPeaks[i].v);
+					System.Drawing.Color RGB = new HSLColor((double)i / BarCount, 1, ColorsAndPeaks[i].hsl.Luminosity);
 					((Rectangle)spectrumCanvas.Children[i]).Fill = new SolidColorBrush(Color.FromRgb(RGB.R, RGB.G, RGB.B));
-				}
-
-				if (spectrumCanvas.Background == null)
-					spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
+				}				
 
 				//convert for solid brush
-				Color AVG_RGB = Color.FromArgb(255, Background.ToColor().R, Background.ToColor().G, Background.ToColor().B);
-					spectrumCanvas.Background = new SolidColorBrush(Color.FromRgb((byte)AVG_RGB.R, (byte)AVG_RGB.G, (byte)AVG_RGB.B));
+				Color AVG_RGB = Color.FromArgb(255, AverageColor.ToColor().R, AverageColor.ToColor().G, AverageColor.ToColor().B);
+				spectrumCanvas.Background = new SolidColorBrush(Color.FromRgb(AVG_RGB.R, AVG_RGB.G, AVG_RGB.B));
 
 				//Display stats
-				Vals.Text = "\t\t\t" + Math.Round(Background.Hue, 4).ToString("0.000") + ", 1.000, " + Math.Round(Background.Luminosity, 4).ToString("0.000") + "\tFPS: " + fps;
 			}
+			else
+			{
+				for (int i = 0; i < BarCount; i++)
+				{
+					((Rectangle)spectrumCanvas.Children[i]).Margin = new Thickness((barWidth * i) + 1, (spectrumCanvas.RenderSize.Height - 1), 0, 0);
+					((Rectangle)spectrumCanvas.Children[i]).Height = 0;					
+					((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 0;
+				}
+				spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
+			}
+
 			if (!Sound_Library.BassEngine.Instance.IsPlaying)
 				animationTimer.Stop();
 		}
@@ -825,8 +816,6 @@ namespace OpenLED_Host.Controls
 				spectrumCanvas.Children.Add(barRectangle);
 			}
 			
-			spectrumCanvas.Children.Add(Vals);
-
 			ActualBarWidth = barWidth;
 		}
 		#endregion
