@@ -281,24 +281,25 @@ namespace OpenLED_Host.LEDModeDrivers
 		/// <returns>An average of all the HSL colors given</returns>
 		private HSLColor GetAVGHSLColor(List<HSLColor> Colors, ColorCalculationModes color, BrightnessCalculationModes brightness)
 		{
-			HSLColor ret = new HSLColor(0,1,0);
-			if (Colors.Count > 0)
+			HSLColor ret = new HSLColor(0.0,1,0);
+			List<HSLColor> TempColors = new List<HSLColor>(Colors);
+			if (TempColors.Count > 0)
 			{
 
 				switch (color)
 				{
 					case (ColorCalculationModes.Angular):
 						{
-							double s = Colors.Average(x => x.Saturation);
-							double l = Colors.Average(x => x.Luminosity);
+							double s = TempColors.Average(x => x.Saturation);
+							double l = TempColors.Average(x => x.Luminosity);
 							double h = 0;
 
 							double a1 = 0;
 							double a2 = 0;
-							for (int i = 0; i < Colors.Count; i++)
+							for (int i = 0; i < TempColors.Count; i++)
 							{
-								a1 += Math.Sin(2 * Math.PI * Colors[i].Hue);
-								a2 += Math.Cos(2 * Math.PI * Colors[i].Hue);
+								a1 += Math.Sin(2 * Math.PI * TempColors[i].Hue);
+								a2 += Math.Cos(2 * Math.PI * TempColors[i].Hue);
 							}
 							if (a1 != 0 || a2 != 0)
 								h = Math.Atan2(a1, a2) / (2 * Math.PI);
@@ -311,12 +312,12 @@ namespace OpenLED_Host.LEDModeDrivers
 					case (ColorCalculationModes.Linear):
 						{
 							double AVGH = 0;
-							for (int i = 0; i < Colors.Count(); i++)
-								if (Colors[i].Luminosity > 0)
-									AVGH = (AVGH * i + Colors[i].Hue) / (i + 1);
+							for (int i = 0; i < TempColors.Count(); i++)
+								if (TempColors[i].Luminosity > 0)
+									AVGH = (AVGH * i + TempColors[i].Hue) / (i + 1);
 
 							//Get a good Value for the background color that is related to how "loud" the sound is by selecting the top 10%
-							ret = new HSLColor(AVGH, 1, Colors.Count > 0 ? Colors.OrderByDescending(x => x.Luminosity).Take((int)(Math.Round(Colors.Count * .1) > 0 ? Math.Round(Colors.Count * .1) : Colors.Count)).Average(x => x.Luminosity) : 0);
+							ret = new HSLColor(AVGH, 1, TempColors.Count > 0 ? TempColors.OrderByDescending(x => x.Luminosity).Take((int)(Math.Round(TempColors.Count * .1) > 0 ? Math.Round(TempColors.Count * .1) : TempColors.Count)).Average(x => x.Luminosity) : 0);
 							if (double.IsNaN(ret.Luminosity))
 								ret.Luminosity = 0;
 							break;
@@ -325,7 +326,7 @@ namespace OpenLED_Host.LEDModeDrivers
 						{
 							List<double> x = new List<double>();
 							List<double> y = new List<double>();
-							foreach (var c in Colors)
+							foreach (var c in TempColors)
 							{
 								x.Add(c.Luminosity * Math.Cos(c.Hue * 2 * Math.PI));
 								y.Add(c.Luminosity * Math.Sin(c.Hue * 2 * Math.PI));
@@ -334,7 +335,6 @@ namespace OpenLED_Host.LEDModeDrivers
 							double AverageX = x.Average();
 							double AverageY = y.Average();
 
-							double r = Math.Sqrt(Math.Pow(AverageX, 2) + Math.Pow(AverageY, 2));
 							double theta = Math.Atan(AverageY / AverageX);
 							if (theta < 0 && theta > -Math.PI)
 								theta = theta + Math.PI;
@@ -358,28 +358,28 @@ namespace OpenLED_Host.LEDModeDrivers
 				{
 					case (BrightnessCalculationModes.Average):
 						{
-							ret.Luminosity = Colors.Average(z => z.Luminosity);
+							ret.Luminosity = TempColors.Average(z => z.Luminosity);
 							break;
 						}
 					case (BrightnessCalculationModes.BlendedOver2):
 						{
-							Colors.Reverse();
-							ret.Luminosity = Colors.Take(BlendedFrames/2 > .5 ? 1: BlendedFrames/2).Average(z=>z.Luminosity);
+							TempColors.Reverse();
+							ret.Luminosity = TempColors.Take(BlendedFrames/2 > .5 ? 1: BlendedFrames/2).Average(z=>z.Luminosity);
 							break;
 						}
 					case (BrightnessCalculationModes.Top10):
 						{
-							ret.Luminosity = Colors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(Colors.Count * .1 < .5 ? 1 : Colors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(TempColors.Count * .1 < .5 ? 1 : TempColors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
 							break;
 						}
 					case (BrightnessCalculationModes.Top25):
 						{
-							ret.Luminosity = Colors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(Colors.Count * .25 < .5 ? 1 : Colors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(TempColors.Count * .25 < .5 ? 1 : TempColors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
 							break;
 						}
 					case (BrightnessCalculationModes.Top50):
 						{
-							ret.Luminosity = Colors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(Colors.Count * .5 < .5 ? 1 : Colors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(TempColors.Count * .5 < .5 ? 1 : TempColors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
 							break;
 						}
 				}
