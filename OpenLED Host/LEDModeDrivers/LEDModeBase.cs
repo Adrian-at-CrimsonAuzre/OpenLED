@@ -12,5 +12,12 @@ namespace OpenLED_Host.LEDModeDrivers
 		{
 			Arduino_Host.WriteColor.RGB(Color.ToColor());
 		}
+
+		public LEDModeBase()
+		{
+			Properties.Settings.Default.PropertyChanged += SettingsChanged;
+		}
+
+		public virtual void SettingsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) { }
 	}
 }

@@ -7,7 +7,7 @@
 		xmlns:controls="clr-namespace:OpenLED_Host.Controls"
 		xmlns:vm="clr-namespace:OpenLED_Host.ViewModels"
 		xmlns:color="clr-namespace:ColorPickerWPF;assembly=ColorPickerWPF"
-		xmlns:converter="clr-namespace:Factory_Logistics.Converters"
+		xmlns:converter="clr-namespace:OpenLED_Host.Converters"
 		mc:Ignorable="d"
 		Closing="Window_Closing"
         Title="OpenLED" WindowStartupLocation="CenterOwner" Width="1280" Height="720">
@@ -17,50 +17,63 @@
 	<Window.Resources>
 		<converter:EnumToStringListConverter x:Key="EnumToStringListConverter"/>
 	</Window.Resources>
-	<TabControl Grid.ColumnSpan="2" Grid.RowSpan="2" TabStripPlacement="Left" FontSize="20" SelectedItem="{Binding TabControlSelected}">
-		<TabItem Header="Settings">
-			<Grid>
-				<ComboBox ItemsSource="{Binding LEDMode, Converter={StaticResource EnumToStringListConverter}}" Text="{Binding LEDMode}" Height="50" Width="100"/>
-			</Grid>
-		</TabItem>
-		<TabItem Header="Static">
-			<color:ColorPickerControl OnPickColor="ColorPickerControl_OnPickColorOne"/>
-		</TabItem>
-		<TabItem Header="Breathing">
-			<Grid>
-			</Grid>
-		</TabItem>
-		<TabItem Header="HeartBeat">
-			<Grid>
-			</Grid>
-		</TabItem>
-		<TabItem Header="Strobing">
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*"/>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
+	<Grid>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width=".5*" MinWidth="570"/>
+		</Grid.ColumnDefinitions>
+		<TabControl TabStripPlacement="Left" FontSize="20" SelectedItem="{Binding TabControlSelected}">
+			<TabItem Header="Settings">
+				<Grid>
+					<ComboBox ItemsSource="{Binding LEDMode, Converter={StaticResource EnumToStringListConverter}}" Text="{Binding LEDMode}" Height="50" Width="100"/>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Static">
+			</TabItem>
+			<TabItem Header="Breathing">
+				<Grid>
+				</Grid>
+			</TabItem>
+			<TabItem Header="HeartBeat">
+				<Grid>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Strobing">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
 
-			</Grid>
-		</TabItem>
-		<TabItem Header="Color Cycle">
-			<Grid>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Color Cycle">
+				<Grid>
 
-			</Grid>
-		</TabItem>
-		<TabItem Header="Rainbow">
-			<Grid>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Rainbow">
+				<Grid>
 
-			</Grid>
-		</TabItem>
-		<TabItem Header="Visualizer">
-			<controls:Spectrum x:Name="Visualizer"
-					BarVisibility="Visible"
-					VolumeAndPitch="{Binding VolumeAndPitch}"
-					MinimumFrequency="{Binding VolumeAndPitch.MinimumFrequency}"
-					MaximumFrequency="{Binding VolumeAndPitch.MaximumFrequency}"
+				</Grid>
+			</TabItem>
+			<TabItem Header="Visualizer">
+				<controls:Spectrum x:Name="Visualizer"
+						BarVisibility="Visible"
+						VolumeAndPitch="{Binding VolumeAndPitch}"
+						MinimumFrequency="{Binding VolumeAndPitch.MinimumFrequency}"
+						MaximumFrequency="{Binding VolumeAndPitch.MaximumFrequency}"
 
-					BlendedFrames="{Binding VolumeAndPitch.BlendedFrames}"/>
-		</TabItem>
-	</TabControl>
+						BlendedFrames="{Binding VolumeAndPitch.BlendedFrames}"/>
+			</TabItem>
+		</TabControl>
+		<Grid Grid.Column="1">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="*"/>
+				<RowDefinition Height="*"/>
+			</Grid.RowDefinitions>
+			<color:ColorPickerControl Grid.Row="0" x:Name="ColorPickerOne" OnPickColor="ColorPickerControl_OnPickColorOne"/>
+			<color:ColorPickerControl Grid.Row="1" x:Name="ColorPickerTwo" OnPickColor="ColorPickerControl_OnPickColorTwo"/>
+		</Grid>
+	</Grid>
 </Window>

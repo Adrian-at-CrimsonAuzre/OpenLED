@@ -180,21 +180,14 @@ namespace OpenLED_Host.LEDModeDrivers
 		public VolumeAndPitchReactive()
 		{
 			ReactiveTimer.Elapsed += ReactiveTimer_Tick;
-		}		
-
-		public void StartReacting()
-		{
 			ReactiveTimer.Start();
 		}
 
-		public void StopReacting()
-		{
-			ReactiveTimer.Stop();
-		}
 		private bool ticking = false;
 		private void ReactiveTimer_Tick(object sender, EventArgs e)
 		{
-			if (!ticking)
+			//Check to see if this mode is enabled, otherwise don't run
+			if (Properties.Settings.Default.LEDMode == LEDModes.VolumeAndPitchReactive && !ticking)
 			{
 				ticking = true;
 				GenerateColorData();

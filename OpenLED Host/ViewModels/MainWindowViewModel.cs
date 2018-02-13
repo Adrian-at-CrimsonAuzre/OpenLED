@@ -11,42 +11,48 @@ namespace OpenLED_Host.ViewModels
 {
 	class MainWindowViewModel : NotifyBase
 	{
-		private LEDModes _LEDMode = LEDModes.Off;
 		/// <summary>
 		/// Current LED Mode of the application
 		/// </summary>
 		public LEDModes LEDMode
 		{
-			get { return _LEDMode; }
+			get { return Properties.Settings.Default.LEDMode; }
 			set
 			{
-				_LEDMode = value;
-
-				switch(LEDMode)
-				{
-					case (LEDModes.Off):
-						{
-							VolumeAndPitch.StopReacting();
-							//Write out black
-							LEDModeBase.ColorOut(new HSLColor(0, 0, 0));
-							break;
-						}
-					case (LEDModes.VolumeAndPitchReactive):
-						{
-							VolumeAndPitch.StartReacting();
-							break;
-						}
-					case (LEDModes.SingleColor):
-						{
-							VolumeAndPitch.StopReacting();
-							break;
-						}
-				}
+				Properties.Settings.Default.LEDMode = value;
+				Properties.Settings.Default.Save();
 
 				NotifyPropertyChanged();
 			}
 		}
 
+		/// <summary>
+		/// Color One of various effects
+		/// </summary>
+		public HSLColor ColorOne
+		{
+			get { return Properties.Settings.Default.ColorOne; }
+			set
+			{
+				Properties.Settings.Default.ColorOne = value;
+				Properties.Settings.Default.Save();
+				NotifyPropertyChanged();
+			}
+		}
+
+		/// <summary>
+		/// Color Two of various effects
+		/// </summary>
+		public HSLColor ColorTwo
+		{
+			get { return Properties.Settings.Default.ColorTwo; }
+			set
+			{
+				Properties.Settings.Default.ColorTwo = value;
+				Properties.Settings.Default.Save();
+				NotifyPropertyChanged();
+			}
+		}
 
 		private VolumeAndPitchReactive _VolumeAndPitch = new VolumeAndPitchReactive();
 		/// <summary>
@@ -75,40 +81,7 @@ namespace OpenLED_Host.ViewModels
 				NotifyPropertyChanged();
 			}
 		}
-
-		private HSLColor _ColorOne = new HSLColor(0, 0, 0);
-		/// <summary>
-		/// Color One of various effects
-		/// </summary>
-		public HSLColor ColorOne
-		{
-			get { return _ColorOne; }
-			set
-			{
-				_ColorOne = value;
-				if (LEDMode == LEDModes.SingleColor)
-					StaticColor.Color = ColorOne;
-				NotifyPropertyChanged();
-			}
-		}
-
-		private HSLColor _ColorTwo = new HSLColor(0, 0, 0);
-		/// <summary>
-		/// Color Two of various effects
-		/// </summary>
-		public HSLColor ColorTwo
-		{
-			get { return _ColorTwo; }
-			set
-			{
-				_ColorTwo = value;
-				NotifyPropertyChanged();
-			}
-		}
-
-
-
-
+		
 		private System.Windows.Controls.TabItem _TabControlSelected;
 		/// <summary>
 		/// Index of the MainWindo TabControl

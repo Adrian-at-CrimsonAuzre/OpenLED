@@ -37,6 +37,9 @@ namespace OpenLED_Host.Views
 					this.WindowState = WindowState.Normal;
 				};
 
+			ColorPickerOne.Color = Properties.Settings.Default.ColorOne == null ? new HSLColor(0, 0.0, 0) : Properties.Settings.Default.ColorOne;
+			ColorPickerTwo.Color = Properties.Settings.Default.ColorTwo == null ? new HSLColor(0, 0.0, 0) : Properties.Settings.Default.ColorTwo;
+
 			Resources.MergedDictionaries.Clear();
 			ResourceDictionary themeResources = Application.LoadComponent(new Uri("ExpressionDark.xaml", UriKind.Relative)) as ResourceDictionary;
 			Resources.MergedDictionaries.Add(themeResources);
@@ -44,7 +47,7 @@ namespace OpenLED_Host.Views
 
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
-			MainWindowViewModel.VolumeAndPitch.StopReacting();
+			//MainWindowViewModel.VolumeAndPitch.StopReacting();
 		}
 		protected override void OnStateChanged(EventArgs e)
 		{
@@ -63,13 +66,15 @@ namespace OpenLED_Host.Views
 			base.OnStateChanged(e);
 		}
 
+		//Since the Color Controls do not have working bindings...
+
 		private void ColorPickerControl_OnPickColorOne(System.Drawing.Color color)
 		{
 			MainWindowViewModel.ColorOne = color;
 		}
 		private void ColorPickerControl_OnPickColorTwo(System.Drawing.Color color)
 		{
-
+			MainWindowViewModel.ColorTwo = color;
 		}
 	}
 }

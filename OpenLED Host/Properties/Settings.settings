@@ -1,7 +1,15 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="uri:settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
-  <Settings />
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="OpenLED_Host.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ColorOne" Type="OpenLED_Host.HSLColor" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ColorTwo" Type="OpenLED_Host.HSLColor" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LEDMode" Type="OpenLED_Host.LEDModeDrivers.LEDModes" Scope="User">
+      <Value Profile="(Default)">Off</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>

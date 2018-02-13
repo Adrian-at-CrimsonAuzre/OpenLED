@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Factory_Logistics.Converters
+namespace OpenLED_Host.Converters
 {
 	class EnumToStringListConverter : IValueConverter
 	{

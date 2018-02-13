@@ -4,25 +4,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.ComponentModel;
 
 namespace OpenLED_Host.LEDModeDrivers
 {
     class StaticColor : LEDModeBase
     {
-		private HSLColor _Color;
-		/// <summary>
-		/// The Color that is supposed to be set
-		/// </summary>
-		public HSLColor Color
+		public override void SettingsChanged(object sender, PropertyChangedEventArgs e)
 		{
-			get { return _Color; }
-			set
+			switch(e.PropertyName)
 			{
-				_Color = value;
-				ColorOut(Color);
-				NotifyPropertyChanged();
+				case (nameof(Properties.Settings.Default.LEDMode)):
+				case (nameof(Properties.Settings.Default.ColorOne)):
+					{
+						if(Properties.Settings.Default.LEDMode == LEDModes.SingleColor)
+							LEDModeBase.ColorOut(Properties.Settings.Default.ColorOne);
+						break;
+					}
 			}
 		}
-
 	}
 }
