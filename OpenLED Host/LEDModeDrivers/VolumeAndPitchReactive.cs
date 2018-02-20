@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Timers;
@@ -181,6 +182,11 @@ namespace OpenLED_Host.LEDModeDrivers
 		{
 			ReactiveTimer.Elapsed += ReactiveTimer_Tick;
 			ReactiveTimer.Start();
+			Properties.Settings.Default.PropertyChanged += SettingsChanged;
+		}
+		private void SettingsChanged(object sender, PropertyChangedEventArgs e)
+		{
+			//throw new NotImplementedException();
 		}
 
 		private bool ticking = false;
@@ -257,11 +263,11 @@ namespace OpenLED_Host.LEDModeDrivers
 
 			//average last [BlendedFrames] background colors together
 			AverageColor = GetAVGHSLColor(ColorsToBlend, ColorCalculationMode, BrightnessCalculationModes.BlendedOver2);
-						
 
-			//Write color to all areas
-			if(Properties.Settings.Default.LEDMode == LEDModes.ColorReactive)
-				ColorOut(AverageColor);
+
+			//If all the colors in "blend" are the same, don't write out (prevents weird issue)
+			//if(ColorsToBlend.Where(x=>x.Hue == 0 && x.Luminosity == 0).Count() != ColorsToBlend.Count)
+			ColorOut(AverageColor);
 			//print the color we're using
 			Console.WriteLine(AverageColor);
 			//update out list of ColorsAndPeaks, which a control depends on

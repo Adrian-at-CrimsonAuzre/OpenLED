@@ -15,6 +15,11 @@ namespace Arduino_Host
     public static class WriteColor
     {
 		/// <summary>
+		/// Don't write if we're already writing
+		/// </summary>
+		private static bool Lock = false;
+
+		/// <summary>
 		/// Baud rate of arduino communication
 		/// </summary>
 		public static int BaudRate = 2000000;
@@ -27,48 +32,34 @@ namespace Arduino_Host
 		/// <returns></returns>
 		public static void SingleRGB(byte ArduinoMode, System.Drawing.Color Color, string COMPort = "")
 		{
-			ThreadPool.QueueUserWorkItem(delegate
-			{
-				try
-				{
-					//TODO: Find better method of doing this, wouldn't want ot try writing RGB data to a Serial CNC or something
-					if (string.IsNullOrEmpty(COMPort) || !SerialPort.GetPortNames().Contains(COMPort))
-						COMPort = SerialPort.GetPortNames().First();
-
-					using (SerialPort serial = new SerialPort(COMPort, BaudRate))
-					{
-						serial.Open();
-
-						serial.Write(new byte[] { ArduinoMode, Color.R, Color.G, Color.B }, 0, 4);
-					}
-				}
-				catch
-				{
-				}
-			});
+			DoubleRGB(ArduinoMode, Color, System.Drawing.Color.Black, 0, COMPort);
 		}
 
-		public static void DoubleRGB(byte ArduinoMode, System.Drawing.Color ColorOne, System.Drawing.Color ColorTwo, ushort FadeBetweenInMilliseconds, byte FadeMode, string COMPort = "" )
+		public static void DoubleRGB(byte ArduinoMode, System.Drawing.Color ColorOne, System.Drawing.Color ColorTwo, byte EffectSpeed, string COMPort = "" )
 		{
-			ThreadPool.QueueUserWorkItem(delegate
+			if(!Lock)
 			{
-				try
+				Lock = true;
+				ThreadPool.QueueUserWorkItem(delegate
 				{
-					//TODO: Find better method of doing this, wouldn't want ot try writing RGB data to a Serial CNC or something
-					if (string.IsNullOrEmpty(COMPort) || !SerialPort.GetPortNames().Contains(COMPort))
-						COMPort = SerialPort.GetPortNames().First();
-
-					using (SerialPort serial = new SerialPort(COMPort, BaudRate))
+					try
 					{
-						serial.Open();
-						byte[] ShortBytes = BitConverter.GetBytes(FadeBetweenInMilliseconds);
-						serial.Write(new byte[] { ArduinoMode, ColorOne.R, ColorOne.G, ColorOne.B, ColorTwo.R, ColorTwo.G, ColorTwo.B, ShortBytes[0], ShortBytes[1] }, 0, 4);
+						//TODO: Find better method of doing this, wouldn't want to try writing RGB data to a Serial CNC or something
+						if (string.IsNullOrEmpty(COMPort) || !SerialPort.GetPortNames().Contains(COMPort))
+							COMPort = SerialPort.GetPortNames().First();
+
+						using (SerialPort serial = new SerialPort(COMPort, BaudRate))
+						{
+							serial.Open();
+							serial.Write(new byte[] { ArduinoMode, ColorOne.R, ColorOne.G, ColorOne.B, ColorTwo.R, ColorTwo.G, ColorTwo.B, EffectSpeed }, 0, 8);
+						}
 					}
-				}
-				catch
-				{
-				}
-			});
+					catch
+					{
+					}
+					Lock = false;
+				});
+			}
 		}
     }
 }

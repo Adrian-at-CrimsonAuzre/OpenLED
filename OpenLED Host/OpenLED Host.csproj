@@ -72,7 +72,6 @@
     <Compile Include="Converters\EnumToStringListConverter.cs" />
     <Compile Include="LEDModeDrivers\LEDModeBase.cs" />
     <Compile Include="LEDModeDrivers\LEDModes.cs" />
-    <Compile Include="LEDModeDrivers\StaticColor.cs" />
     <Compile Include="LEDModeDrivers\VolumeAndPitchReactive.cs" />
     <Compile Include="Controls\Spectrum.cs" />
     <Page Include="ExpressionDark.xaml">

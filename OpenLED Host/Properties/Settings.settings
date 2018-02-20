@@ -11,5 +11,8 @@
     <Setting Name="LEDMode" Type="OpenLED_Host.LEDModeDrivers.LEDModes" Scope="User">
       <Value Profile="(Default)">Off</Value>
     </Setting>
+    <Setting Name="EffectSpeed" Type="System.Byte" Scope="User">
+      <Value Profile="(Default)">128</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

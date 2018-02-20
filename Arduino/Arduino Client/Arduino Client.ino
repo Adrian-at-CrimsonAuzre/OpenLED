@@ -5,13 +5,25 @@
 
 CRGB leds[NUM_LEDS];
 ArduinoModes Mode = ArduinoModes::StaticColor;
+int EffectSpeedMS = 0;
+unsigned long EffectCounter = 0;
 long resetLEDs = 0;
+
+
+//Mode, Color1(3), Color2(3), Speed
+byte SerialBuffer[8];
+
+//Colors for dual color effects
+CRGB ColorOne;
+CRGB ColorTwo;
+CRGB ColorOut;
 
 //TODO: Better Arduino communication
 void setup()
 {
-	//Max BAUD we can get out of a Nano
+	//Max BAUD we can get out of a Nano, Expect 8 bits with Even parity and 2 stop bits
 	Serial.begin(2000000);
+	Serial.setTimeout(10);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
 
 	//turn them off when we first start
@@ -20,58 +32,91 @@ void setup()
 
 void loop()
 {
-	byte SerialRGBIn[3] = { 0,0,0 };
-
 	if (Serial.available())
 	{
 		//All serial communication will start with a byte indicating the mode to be used
-		Mode = (ArduinoModes)Serial.read();
+		Serial.readBytes(SerialBuffer, 8);
+		Mode = (ArduinoModes)SerialBuffer[0];
 
 		switch (Mode)
 		{
 			case(ArduinoModes::Off):
 			{
-				SerialRGBIn[0] = 0;
-				SerialRGBIn[1] = 0;
-				SerialRGBIn[2] = 0;
+				ColorOne = CRGB(0, 0, 0);
+				ColorOut = ColorOne;
 			}
-
 			//Since Color reactive is just a stream of Static Colors, they do the same thing
 			case(ArduinoModes::StaticColor):
 			case(ArduinoModes::ColorReactive):
 			{
-				Serial.readBytes(SerialRGBIn, 3);
+				ColorOne = CRGB(SerialBuffer[1], SerialBuffer[2], SerialBuffer[3]);
+				ColorTwo = CRGB(0, 0, 0);
+
+				ColorOut = ColorOne;
+				resetLEDs = 0;
 				break;
+			}
+			//All of these require two colors, and a speed
+			case(ArduinoModes::Breathing):
+			case(ArduinoModes::Cycle):
+			case(ArduinoModes::HeartBeat):
+			case(ArduinoModes::Rainbow):
+			case(ArduinoModes::Strobe):
+			{
+				ColorOne = CRGB(SerialBuffer[1], SerialBuffer[2], SerialBuffer[3]);
+				ColorTwo = CRGB(SerialBuffer[4], SerialBuffer[5], SerialBuffer[6]);
+				EffectSpeedMS = SerialBuffer[7];
 			}
 			default:
 				break;
 		}
 
-		//Sometimes the serial buffer gets missaligned (Windows is strange when CPU usage is high) and will incorrectly read data
-		//Example:
-		//	What is Output:		....28],[7,26,200,65],[7,26,6,200],[7,....
-		//	What is Read:			..28,7],[26,200,65,7],[26,6,200,7],[......
-		serialFlush();
-
-		//Correct brightness, since the LEDs are bright as hell
-		for (int i = 0; i < 3; i++)
-			SerialRGBIn[i] = round(pow((double)SerialRGBIn[i], 1 / 1.25));
-		FastLED.showColor(CRGB((int)SerialRGBIn[0], (int)SerialRGBIn[1], (int)SerialRGBIn[2]));
+		//Write our color (when this is moved out of this statement, everything is fucked
+		FastLED.showColor(ColorOut);
 	}
 
-
-	//Some modes (ColorReactive and Visualizer) require a relatively constant stream of data. If we don't get that, turn off the LEDs
-	resetLEDs++;
-	if (Mode == ArduinoModes::ColorReactive && resetLEDs >= 100000)
+	//Update our dual color effects (if we have any)
+	switch (Mode)
 	{
-		resetLEDs = 0;
-		FastLED.showColor(CRGB(0, 0, 0));
+		case(ArduinoModes::Breathing):
+		{
+			EffectCounter++;
+			double Correction = (sin(EffectCounter*PI*.01*((double)EffectSpeedMS / 255)) + .5) / 2;
+			if (Correction < 0)
+				Correction = 0;
+			ColorOut = CRGB(round(ColorOne.r * Correction), round(ColorOne.g * Correction), round(ColorOne.b * Correction));
+			//HACK
+			FastLED.showColor(ColorOut);
+			break;
+		}
+		case(ArduinoModes::Cycle):
+		{
+			break;
+		}
+		case(ArduinoModes::HeartBeat):
+		{
+			break;
+		}
+		case(ArduinoModes::Rainbow):
+		{
+			break;
+		}
+		case(ArduinoModes::Strobe):
+		{
+			break;
+		}
+		default:
+			break;
 	}
-}
-
-//Flush serial in
-void serialFlush() {
-	while (Serial.available() > 0) {
-		char t = Serial.read();
+	//Some modes (ColorReactive and Visualizer) require a relatively constant stream of data. If we don't get that, turn off the LEDs
+	if (Mode == ArduinoModes::ColorReactive)
+	{
+		resetLEDs++;
+		if (resetLEDs >= 100000)
+		{
+			resetLEDs = 0;
+			ColorOut = CRGB(0, 0, 0);
+			FastLED.showColor(ColorOut);
+		}
 	}
 }

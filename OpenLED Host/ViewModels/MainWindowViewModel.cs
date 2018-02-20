@@ -54,6 +54,20 @@ namespace OpenLED_Host.ViewModels
 			}
 		}
 
+		/// <summary>
+		/// Speed of various effects
+		/// </summary>
+		public byte EffectSpeed
+		{
+			get { return Properties.Settings.Default.EffectSpeed; }
+			set
+			{
+				Properties.Settings.Default.EffectSpeed = value;
+				Properties.Settings.Default.Save();
+				NotifyPropertyChanged();
+			}
+		}
+
 		private VolumeAndPitchReactive _VolumeAndPitch = new VolumeAndPitchReactive();
 		/// <summary>
 		/// Backend for lighting
@@ -64,20 +78,6 @@ namespace OpenLED_Host.ViewModels
 			set
 			{
 				_VolumeAndPitch = value;
-				NotifyPropertyChanged();
-			}
-		}
-
-		private StaticColor _StaticColor = new StaticColor();
-		/// <summary>
-		/// The Static Color property
-		/// </summary>
-		public StaticColor StaticColor
-		{
-			get { return _StaticColor; }
-			set
-			{
-				_StaticColor = value;
 				NotifyPropertyChanged();
 			}
 		}

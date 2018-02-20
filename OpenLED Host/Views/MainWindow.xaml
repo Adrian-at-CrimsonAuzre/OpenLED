@@ -25,37 +25,32 @@
 		<TabControl TabStripPlacement="Left" FontSize="20" SelectedItem="{Binding TabControlSelected}">
 			<TabItem Header="Settings">
 				<Grid>
-					<ComboBox ItemsSource="{Binding LEDMode, Converter={StaticResource EnumToStringListConverter}}" Text="{Binding LEDMode}" Height="50" Width="100"/>
-				</Grid>
-			</TabItem>
-			<TabItem Header="Static">
-			</TabItem>
-			<TabItem Header="Breathing">
-				<Grid>
-				</Grid>
-			</TabItem>
-			<TabItem Header="HeartBeat">
-				<Grid>
-				</Grid>
-			</TabItem>
-			<TabItem Header="Strobing">
-				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="auto"/>
+						<RowDefinition Height="auto"/>
+						<RowDefinition Height="*"/>
+					</Grid.RowDefinitions>
 					<Grid.ColumnDefinitions>
 						<ColumnDefinition Width="*"/>
 						<ColumnDefinition Width="*"/>
 					</Grid.ColumnDefinitions>
 
+					<TextBlock Grid.Row="0" Grid.Column="0" Text="Effect:"/>
+					<ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding LEDMode, Converter={StaticResource EnumToStringListConverter}}" Text="{Binding LEDMode}" VerticalAlignment="Stretch"/>
+					
+					<TextBlock Grid.Row="1" Grid.Column="0" Text="Effect Speed:"/>
+					<Slider Grid.Row="1" Grid.Column="1" VerticalAlignment="Stretch" Minimum="1" Maximum="255" Ticks="255" Interval="1" Value="{Binding EffectSpeed}"/>
 				</Grid>
+			</TabItem>
+			<TabItem Header="Breathing">
+			</TabItem>
+			<TabItem Header="HeartBeat">
+			</TabItem>
+			<TabItem Header="Strobing">
 			</TabItem>
 			<TabItem Header="Color Cycle">
-				<Grid>
-
-				</Grid>
 			</TabItem>
 			<TabItem Header="Rainbow">
-				<Grid>
-
-				</Grid>
 			</TabItem>
 			<TabItem Header="Visualizer">
 				<controls:Spectrum x:Name="Visualizer"

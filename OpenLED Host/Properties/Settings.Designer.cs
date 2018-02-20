@@ -56,5 +56,17 @@ namespace OpenLED_Host.Properties {
                 this["LEDMode"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("128")]
+        public byte EffectSpeed {
+            get {
+                return ((byte)(this["EffectSpeed"]));
+            }
+            set {
+                this["EffectSpeed"] = value;
+            }
+        }
     }
 }
