@@ -14,9 +14,9 @@ long resetLEDs = 0;
 byte SerialBuffer[8];
 
 //Colors for dual color effects
-CRGB ColorOne;
-CRGB ColorTwo;
-CRGB ColorOut;
+CHSV ColorOne;
+CHSV ColorTwo;
+CHSV ColorOut;
 
 //TODO: Better Arduino communication
 void setup()
@@ -27,7 +27,7 @@ void setup()
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
 
 	//turn them off when we first start
-	FastLED.showColor(CRGB(0, 0, 0));
+	FastLED.showColor(CHSV(0, 0, 0));
 }
 
 void loop()
@@ -42,15 +42,15 @@ void loop()
 		{
 			case(ArduinoModes::Off):
 			{
-				ColorOne = CRGB(0, 0, 0);
+				ColorOne = CHSV(0, 0, 0);
 				ColorOut = ColorOne;
 			}
 			//Since Color reactive is just a stream of Static Colors, they do the same thing
 			case(ArduinoModes::StaticColor):
 			case(ArduinoModes::ColorReactive):
 			{
-				ColorOne = CRGB(SerialBuffer[1], SerialBuffer[2], SerialBuffer[3]);
-				ColorTwo = CRGB(0, 0, 0);
+				ColorOne = CHSV(SerialBuffer[1], SerialBuffer[2], SerialBuffer[3]);
+				ColorTwo = CHSV(0, 0, 0);
 
 				ColorOut = ColorOne;
 				resetLEDs = 0;
@@ -63,8 +63,8 @@ void loop()
 			case(ArduinoModes::Rainbow):
 			case(ArduinoModes::Strobe):
 			{
-				ColorOne = CRGB(SerialBuffer[1], SerialBuffer[2], SerialBuffer[3]);
-				ColorTwo = CRGB(SerialBuffer[4], SerialBuffer[5], SerialBuffer[6]);
+				ColorOne = CHSV(SerialBuffer[1], SerialBuffer[2], SerialBuffer[3]);
+				ColorTwo = CHSV(SerialBuffer[4], SerialBuffer[5], SerialBuffer[6]);
 				EffectSpeedMS = SerialBuffer[7];
 			}
 			default:
@@ -84,7 +84,8 @@ void loop()
 			double Correction = (sin(EffectCounter*PI*.01*((double)EffectSpeedMS / 255)) + .5) / 2;
 			if (Correction < 0)
 				Correction = 0;
-			ColorOut = CRGB(round(ColorOne.r * Correction), round(ColorOne.g * Correction), round(ColorOne.b * Correction));
+			ColorOut = ColorOne;
+			ColorOut.value = round(ColorOut.value* Correction);
 			//HACK
 			FastLED.showColor(ColorOut);
 			break;
@@ -115,7 +116,7 @@ void loop()
 		if (resetLEDs >= 100000)
 		{
 			resetLEDs = 0;
-			ColorOut = CRGB(0, 0, 0);
+			ColorOut = CHSV(0, 0, 0);
 			FastLED.showColor(ColorOut);
 		}
 	}

@@ -10,11 +10,11 @@ namespace OpenLED_Host.LEDModeDrivers
 	{
 		public static void ColorOut(HSLColor Color)
 		{
-			Arduino_Host.WriteColor.SingleRGB((byte)Properties.Settings.Default.LEDMode, Color.ToColor());
+			Arduino_Host.WriteColor.SingleRGB((byte)Properties.Settings.Default.LEDMode, new double[] { Color.Hue, Color.Saturation, Color.Luminosity});
 		}
 		public static void DualColorOut(HSLColor ColorOne, HSLColor ColorTwo, byte EffectSpeed)
 		{
-			Arduino_Host.WriteColor.DoubleRGB((byte)Properties.Settings.Default.LEDMode, ColorOne, ColorTwo, EffectSpeed);
+			Arduino_Host.WriteColor.DoubleRGB((byte)Properties.Settings.Default.LEDMode, new double[] { ColorOne.Hue, ColorOne.Saturation, ColorOne.Luminosity }, new double[] { ColorTwo.Hue, ColorTwo.Saturation, ColorTwo.Luminosity }, EffectSpeed);
 		}
 		public LEDModeBase()
 		{
