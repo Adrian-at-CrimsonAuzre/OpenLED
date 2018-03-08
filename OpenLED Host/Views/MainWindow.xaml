@@ -55,11 +55,7 @@
 			<TabItem Header="Visualizer">
 				<controls:Spectrum x:Name="Visualizer"
 						BarVisibility="Visible"
-						VolumeAndPitch="{Binding VolumeAndPitch}"
-						MinimumFrequency="{Binding VolumeAndPitch.MinimumFrequency}"
-						MaximumFrequency="{Binding VolumeAndPitch.MaximumFrequency}"
-
-						BlendedFrames="{Binding VolumeAndPitch.BlendedFrames}"/>
+						VolumeAndPitch="{Binding VolumeAndPitch}"/>
 			</TabItem>
 		</TabControl>
 		<Grid Grid.Column="1">

@@ -27,139 +27,7 @@ namespace OpenLED_Host.Controls
 		private int BarCount;
 		#endregion
 
-		#region Constants
-		private const int scaleFactorLinear = 5;
-		#endregion
-
 		#region Dependency Properties
-
-		#region MaximumFrequency
-		/// <summary>
-		/// Identifies the <see cref="MaximumFrequency" /> dependency property. 
-		/// </summary>
-		public static readonly DependencyProperty MaximumFrequencyProperty = DependencyProperty.Register("MaximumFrequency", typeof(int), typeof(Spectrum), new UIPropertyMetadata(20000, OnMaximumFrequencyChanged, OnCoerceMaximumFrequency));
-
-		private static object OnCoerceMaximumFrequency(DependencyObject o, object value)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				return spectrum.OnCoerceMaximumFrequency((int)value);
-			else
-				return value;
-		}
-
-		private static void OnMaximumFrequencyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				spectrum.OnMaximumFrequencyChanged((int)e.OldValue, (int)e.NewValue);
-		}
-
-		/// <summary>
-		/// Coerces the value of <see cref="MaximumFrequency"/> when a new value is applied.
-		/// </summary>
-		/// <param name="value">The value that was set on <see cref="MaximumFrequency"/></param>
-		/// <returns>The adjusted value of <see cref="MaximumFrequency"/></returns>
-		protected virtual int OnCoerceMaximumFrequency(int value)
-		{
-			if ((int)value < MinimumFrequency)
-				return MinimumFrequency + 1;
-			return value;
-		}
-
-		/// <summary>
-		/// Called after the <see cref="MaximumFrequency"/> value has changed.
-		/// </summary>
-		/// <param name="oldValue">The previous value of <see cref="MaximumFrequency"/></param>
-		/// <param name="newValue">The new value of <see cref="MaximumFrequency"/></param>
-		protected virtual void OnMaximumFrequencyChanged(int oldValue, int newValue)
-		{
-			UpdateBarLayout();
-		}
-
-		/// <summary>
-		/// Gets or sets the maximum display frequency (right side) for the spectrum analyzer.
-		/// </summary>
-		/// <remarks>In usual practice, this value should be somewhere between 0 and half of the maximum sample rate. If using
-		/// the maximum sample rate, this would be roughly 22000.</remarks>
-		[Category("Common")]
-		public int MaximumFrequency
-		{
-			// IMPORTANT: To maintain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
-			get
-			{
-				return (int)GetValue(MaximumFrequencyProperty);
-			}
-			set
-			{
-				SetValue(MaximumFrequencyProperty, value);
-			}
-		}
-		#endregion
-
-		#region Minimum Frequency
-		/// <summary>
-		/// Identifies the <see cref="MinimumFrequency" /> dependency property. 
-		/// </summary>
-		public static readonly DependencyProperty MinimumFrequencyProperty = DependencyProperty.Register("MinimumFrequency", typeof(int), typeof(Spectrum), new UIPropertyMetadata(20, OnMinimumFrequencyChanged, OnCoerceMinimumFrequency));
-
-		private static object OnCoerceMinimumFrequency(DependencyObject o, object value)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				return spectrum.OnCoerceMinimumFrequency((int)value);
-			else
-				return value;
-		}
-
-		private static void OnMinimumFrequencyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				spectrum.OnMinimumFrequencyChanged((int)e.OldValue, (int)e.NewValue);
-		}
-
-		/// <summary>
-		/// Coerces the value of <see cref="MinimumFrequency"/> when a new value is applied.
-		/// </summary>
-		/// <param name="value">The value that was set on <see cref="MinimumFrequency"/></param>
-		/// <returns>The adjusted value of <see cref="MinimumFrequency"/></returns>
-		protected virtual int OnCoerceMinimumFrequency(int value)
-		{
-			if (value < 0)
-				return value = 0;
-			CoerceValue(MaximumFrequencyProperty);
-			return value;
-		}
-
-		/// <summary>
-		/// Called after the <see cref="MinimumFrequency"/> value has changed.
-		/// </summary>
-		/// <param name="oldValue">The previous value of <see cref="MinimumFrequency"/></param>
-		/// <param name="newValue">The new value of <see cref="MinimumFrequency"/></param>
-		protected virtual void OnMinimumFrequencyChanged(int oldValue, int newValue)
-		{
-			UpdateBarLayout();
-		}
-
-		/// <summary>
-		/// Gets or sets the minimum display frequency (left side) for the spectrum analyzer.
-		/// </summary>
-		[Category("Common")]
-		public int MinimumFrequency
-		{
-			// IMPORTANT: To maintain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
-			get
-			{
-				return (int)GetValue(MinimumFrequencyProperty);
-			}
-			set
-			{
-				SetValue(MinimumFrequencyProperty, value);
-			}
-		}
-
-		#endregion
 		
 		#region BarVisibility
 		/// <summary>
@@ -219,69 +87,6 @@ namespace OpenLED_Host.Controls
 			set
 			{
 				SetValue(BarVisibilityProperty, value);
-			}
-		}
-		#endregion
-
-		#region BlendedFrames
-		/// <summary>
-		/// Identifies the <see cref="BlendedFrames" /> dependency property. 
-		/// </summary>
-		public static readonly DependencyProperty BlendedFramesProperty = DependencyProperty.Register("BlendedFrames", typeof(int), typeof(Spectrum), new UIPropertyMetadata(0, OnBlendedFramesChanged, OnCoerceBlendedFrames));
-
-		private static object OnCoerceBlendedFrames(DependencyObject o, object value)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				return spectrum.OnCoerceBlendedFrames((int)value);
-			else
-				return value;
-		}
-
-		private static void OnBlendedFramesChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				spectrum.OnBlendedFramesChanged((int)e.OldValue, (int)e.NewValue);
-		}
-
-		/// <summary>
-		/// Coerces the value of <see cref="BlendedFrames"/> when a new value is applied.
-		/// </summary>
-		/// <param name="value">The value that was set on <see cref="BlendedFrames"/></param>
-		/// <returns>The adjusted value of <see cref="BlendedFrames"/></returns>
-		protected virtual int OnCoerceBlendedFrames(int value)
-		{
-			value = Math.Max(value, 0);
-			return value;
-		}
-
-		/// <summary>
-		/// Called after the <see cref="BlendedFrames"/> value has changed.
-		/// </summary>
-		/// <param name="oldValue">The previous value of <see cref="BlendedFrames"/></param>
-		/// <param name="newValue">The new value of <see cref="BlendedFrames"/></param>
-		protected virtual void OnBlendedFramesChanged(int oldValue, int newValue)
-		{
-			UpdateBarLayout();
-		}
-
-		/// <summary>
-		/// Gets or sets the number of bars to show on the sprectrum analyzer.
-		/// </summary>
-		/// <remarks>A bar's width can be a minimum of 1 pixel. If the BarSpacing and BlendedFrames property result
-		/// in the bars being wider than the chart itself, the BlendedFrames will automatically scale down.</remarks>
-		[Category("Common")]
-		public int BlendedFrames
-		{
-			// IMPORTANT: To maintain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
-			get
-			{
-				return (int)GetValue(BlendedFramesProperty);
-			}
-			set
-			{
-				SetValue(BlendedFramesProperty, value);
 			}
 		}
 		#endregion
@@ -466,190 +271,6 @@ namespace OpenLED_Host.Controls
 		}
 		#endregion
 
-
-		#region ThresholdWindow
-		/// <summary>
-		/// Identifies the <see cref="ThresholdWindow" /> dependency property. 
-		/// </summary>
-		public static readonly DependencyProperty ThresholdWindowProperty = DependencyProperty.Register("ThresholdWindow", typeof(int), typeof(Spectrum), new UIPropertyMetadata(5, OnThresholdWindowChanged, OnCoerceThresholdWindow));
-
-		private static object OnCoerceThresholdWindow(DependencyObject o, object value)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				return spectrum.OnCoerceThresholdWindow((int)value);
-			else
-				return value;
-		}
-
-		private static void OnThresholdWindowChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				spectrum.OnThresholdWindowChanged((int)e.OldValue, (int)e.NewValue);
-		}
-
-		/// <summary>
-		/// Coerces the value of <see cref="ThresholdWindow"/> when a new value is applied.
-		/// </summary>
-		/// <param name="value">The value that was set on <see cref="ThresholdWindow"/></param>
-		/// <returns>The adjusted value of <see cref="ThresholdWindow"/></returns>
-		protected virtual int OnCoerceThresholdWindow(int value)
-		{
-			value = Math.Max(value, 0);
-			return value;
-		}
-
-		/// <summary>
-		/// Called after the <see cref="ThresholdWindow"/> value has changed.
-		/// </summary>
-		/// <param name="oldValue">The previous value of <see cref="ThresholdWindow"/></param>
-		/// <param name="newValue">The new value of <see cref="ThresholdWindow"/></param>
-		protected virtual void OnThresholdWindowChanged(int oldValue, int newValue)
-		{
-			UpdateBarLayout();
-		}
-
-		/// <summary>
-		/// Gets or sets the spacing between the bars.
-		/// </summary>
-		[Category("Common")]
-		public int ThresholdWindow
-		{
-			// IMPORTANT: To maintain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
-			get
-			{
-				return (int)GetValue(ThresholdWindowProperty);
-			}
-			set
-			{
-				SetValue(ThresholdWindowProperty, value);
-			}
-		}
-		#endregion
-
-		#region ThresholdThreshold
-		/// <summary>
-		/// Identifies the <see cref="ThresholdThreshold" /> dependency property. 
-		/// </summary>
-		public static readonly DependencyProperty ThresholdThresholdProperty = DependencyProperty.Register("ThresholdThreshold", typeof(double), typeof(Spectrum), new UIPropertyMetadata(0.1, OnThresholdThresholdChanged, OnCoerceThresholdThreshold));
-
-		private static object OnCoerceThresholdThreshold(DependencyObject o, object value)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				return spectrum.OnCoerceThresholdThreshold((double)value);
-			else
-				return value;
-		}
-
-		private static void OnThresholdThresholdChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				spectrum.OnThresholdThresholdChanged((double)e.OldValue, (double)e.NewValue);
-		}
-
-		/// <summary>
-		/// Coerces the value of <see cref="ThresholdThreshold"/> when a new value is applied.
-		/// </summary>
-		/// <param name="value">The value that was set on <see cref="ThresholdThreshold"/></param>
-		/// <returns>The adjusted value of <see cref="ThresholdThreshold"/></returns>
-		protected virtual double OnCoerceThresholdThreshold(double value)
-		{
-			value = Math.Max(value, 0);
-			return value;
-		}
-
-		/// <summary>
-		/// Called after the <see cref="ThresholdThreshold"/> value has changed.
-		/// </summary>
-		/// <param name="oldValue">The previous value of <see cref="ThresholdThreshold"/></param>
-		/// <param name="newValue">The new value of <see cref="ThresholdThreshold"/></param>
-		protected virtual void OnThresholdThresholdChanged(double oldValue, double newValue)
-		{
-			UpdateBarLayout();
-		}
-
-		/// <summary>
-		/// Gets or sets the spacing between the bars.
-		/// </summary>
-		[Category("Common")]
-		public double ThresholdThreshold
-		{
-			// IMPORTANT: To maintain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
-			get
-			{
-				return (double)GetValue(ThresholdThresholdProperty);
-			}
-			set
-			{
-				SetValue(ThresholdThresholdProperty, value);
-			}
-		}
-		#endregion
-
-		#region ThresholdInfluence
-		/// <summary>
-		/// Identifies the <see cref="ThresholdInfluence" /> dependency property. 
-		/// </summary>
-		public static readonly DependencyProperty ThresholdInfluenceProperty = DependencyProperty.Register("ThresholdInfluence", typeof(double), typeof(Spectrum), new UIPropertyMetadata(0.5, OnThresholdInfluenceChanged, OnCoerceThresholdInfluence));
-
-		private static object OnCoerceThresholdInfluence(DependencyObject o, object value)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				return spectrum.OnCoerceThresholdInfluence((double)value);
-			else
-				return value;
-		}
-
-		private static void OnThresholdInfluenceChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			Spectrum spectrum = o as Spectrum;
-			if (spectrum != null)
-				spectrum.OnThresholdInfluenceChanged((double)e.OldValue, (double)e.NewValue);
-		}
-
-		/// <summary>
-		/// Coerces the value of <see cref="ThresholdInfluence"/> when a new value is applied.
-		/// </summary>
-		/// <param name="value">The value that was set on <see cref="ThresholdInfluence"/></param>
-		/// <returns>The adjusted value of <see cref="ThresholdInfluence"/></returns>
-		protected virtual double OnCoerceThresholdInfluence(double value)
-		{
-			value = Math.Max(value, 0);
-			return value;
-		}
-
-		/// <summary>
-		/// Called after the <see cref="ThresholdInfluence"/> value has changed.
-		/// </summary>
-		/// <param name="oldValue">The previous value of <see cref="ThresholdInfluence"/></param>
-		/// <param name="newValue">The new value of <see cref="ThresholdInfluence"/></param>
-		protected virtual void OnThresholdInfluenceChanged(double oldValue, double newValue)
-		{
-			UpdateBarLayout();
-		}
-
-		/// <summary>
-		/// Gets or sets the spacing between the bars.
-		/// </summary>
-		[Category("Common")]
-		public double ThresholdInfluence
-		{
-			// IMPORTANT: To maintain parity between setting a property in XAML and procedural code, do not touch the getter and setter inside this dependency property!
-			get
-			{
-				return (double)GetValue(ThresholdInfluenceProperty);
-			}
-			set
-			{
-				SetValue(ThresholdInfluenceProperty, value);
-			}
-		}
-		#endregion
-
 		#endregion
 
 		#region Template Overrides
@@ -745,28 +366,21 @@ namespace OpenLED_Host.Controls
 		
 		private void UpdateSpectrumShapes()
 		{
-			List<(HSLColor hsl, int p)> ColorsAndPeaks = new List<(HSLColor hsl, int p)>(VolumeAndPitch.ColorsAndPeaks);
+			List<HSLColor> Colors = new List<HSLColor>(VolumeAndPitch.ColorData);
 			HSLColor AverageColor = VolumeAndPitch.AverageColor;
 
 			//If nothing is playing, then don't update
-			if (AverageColor != new HSLColor(0, 0, 0) && ColorsAndPeaks.Count > 0)
+			if (AverageColor != new HSLColor(0, 0, 0) && Colors.Count > 0)
 			{
 				for (int i = 0; i < BarCount; i++)
 				{
-					double barHeight = ColorsAndPeaks[i].hsl.Luminosity * spectrumCanvas.RenderSize.Height;
+					double barHeight = Colors[i].Luminosity * spectrumCanvas.RenderSize.Height;
 					
 					((Rectangle)spectrumCanvas.Children[i]).Margin = new Thickness((barWidth * i) + 1, (spectrumCanvas.RenderSize.Height - 1) - barHeight, 0, 0);
 					((Rectangle)spectrumCanvas.Children[i]).Height = barHeight;
-
-					//Add white border to the peaks on the UI, to show what's being used in the color calculation.
-					//Was originally for diagnostic, but it looks neat.
-					if (ColorsAndPeaks[i].p > 0)
-						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 2;
-					else
-						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 0;
 					
 					//Set color for the rectangles
-					System.Drawing.Color RGB = new HSLColor((double)i / BarCount, 1, ColorsAndPeaks[i].hsl.Luminosity);
+					System.Drawing.Color RGB = new HSLColor((double)i / BarCount, 1, Colors[i].Luminosity);
 					((Rectangle)spectrumCanvas.Children[i]).Fill = new SolidColorBrush(Color.FromRgb(RGB.R, RGB.G, RGB.B));
 				}				
 
@@ -784,7 +398,7 @@ namespace OpenLED_Host.Controls
 					((Rectangle)spectrumCanvas.Children[i]).Height = 0;					
 					((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 0;
 				}
-				spectrumCanvas.Background = new SolidColorBrush(Colors.Black);
+				spectrumCanvas.Background = new SolidColorBrush(System.Windows.Media.Colors.Black);
 			}
 
 			if (!Sound_Library.BassEngine.Instance.IsPlaying)
@@ -792,7 +406,8 @@ namespace OpenLED_Host.Controls
 		}
 		private void UpdateBarLayout()
 		{
-			BarCount = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency) - Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
+			if(VolumeAndPitch != null)
+				BarCount = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(VolumeAndPitch.MaximumFrequency) - Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(VolumeAndPitch.MinimumFrequency);
 			if (spectrumCanvas == null || spectrumCanvas.RenderSize.IsEmpty || BarCount == 0)
 				return;
 
