@@ -60,7 +60,7 @@ namespace OpenLED_Host.LEDModeDrivers
 			Top10
 		}
 
-		private BrightnessCalculationModes _BrightnessCalculationMode = BrightnessCalculationModes.Top25;
+		private BrightnessCalculationModes _BrightnessCalculationMode = BrightnessCalculationModes.Top10;
 		/// <summary>
 		/// Mode Brightness should be calculated in
 		/// </summary>
@@ -75,7 +75,7 @@ namespace OpenLED_Host.LEDModeDrivers
 		}
 
 
-		private int _MaximumFrequency = 2000;
+		private int _MaximumFrequency = 5000;
 		/// <summary>
 		/// Max allowed frequency, defaults to 2000
 		/// </summary>
@@ -117,6 +117,36 @@ namespace OpenLED_Host.LEDModeDrivers
 			}
 		}
 
+		private List<bool> _Peaks = new List<bool>();
+		/// <summary>
+		/// Peaks Detected
+		/// </summary>
+		public List<bool> Peaks
+		{
+			get { return _Peaks; }
+			set
+			{
+				_Peaks = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private bool _PeakDetectionEnabled = false;
+		/// <summary>
+		/// Is peak detection enabled?
+		/// </summary>
+		public bool PeakDetectionEnabled
+		{
+			get { return _PeakDetectionEnabled; }
+			set
+			{
+				_PeakDetectionEnabled = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+
+
 		private HSLColor _AverageColor = new HSLColor(0, 0, 0);
 		/// <summary>
 		/// Average Color of of FFT data
@@ -130,6 +160,21 @@ namespace OpenLED_Host.LEDModeDrivers
 				NotifyPropertyChanged();
 			}
 		}
+
+		private int _ScaleFactor = 16;
+		/// <summary>
+		/// Changes the scale (and "volume") of the bars on the visualizer
+		/// </summary>
+		public int ScaleFactor
+		{
+			get { return _ScaleFactor; }
+			set
+			{
+				_ScaleFactor = value;
+				NotifyPropertyChanged();
+			}
+		}
+
 
 		#endregion Fields
 		private Timer ReactiveTimer = new Timer()
@@ -169,7 +214,6 @@ namespace OpenLED_Host.LEDModeDrivers
 			//List<(double v, int p)> VolumesAndPeaks = new List<(double, int)>();
 			List<HSLColor> Colors = new List<HSLColor>();
 
-			int scaleFactorLinear = 8;
 
 			int maximumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MaximumFrequency);
 			int minimumFrequencyIndex = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(MinimumFrequency);
@@ -178,19 +222,38 @@ namespace OpenLED_Host.LEDModeDrivers
 
 			for (int i = minimumFrequencyIndex; i <= maximumFrequencyIndex; i++)
 			{
-				double fftBucketHeight = channelData[i] * scaleFactorLinear;
-				
-				//Keep peaks in range incase weird shit has happened
+				double fftBucketHeight = channelData[i] * ScaleFactor;
+
+				//Keep peaks above 0, capping the top of the peaks is done later to allow for a curve to be applied
 				if (fftBucketHeight < 0f)
 					fftBucketHeight = 0f;
-				else if (fftBucketHeight > 1)
-					fftBucketHeight = 1;
+
+				//Wolfram .5/(1+2^-(x*10-5))+1 from 0 to 1
+				double VolumeCorrection = 1 / (1 + Math.Pow(2, -(((double)i / (maximumFrequencyIndex - minimumFrequencyIndex)) * 10 - 5))) + .5;
 
 				//This is used later for calculating colors and positions
-				Colors.Add(new HSLColor((double)(i-minimumFrequencyIndex) / (maximumFrequencyIndex-minimumFrequencyIndex), 1, fftBucketHeight));
+				Colors.Add(new HSLColor((double)(i - minimumFrequencyIndex) / (maximumFrequencyIndex - minimumFrequencyIndex), 1, fftBucketHeight * VolumeCorrection));
 			}
 
-			AverageColor = GetAVGHSLColor(Colors, ColorCalculationMode, BrightnessCalculationMode);
+			//Scale everything acording to the max volume value
+			double MaxHeight = Colors.Max(x => x.Luminosity);
+			if (MaxHeight > 0 && MaxHeight > 1)
+				for (int i = 0; i < Colors.Count; i++)
+					Colors[i].Luminosity /= MaxHeight;
+
+			//Optional PeakDetection
+			List<HSLColor> TopHSLValues = new List<HSLColor>();
+			if (PeakDetectionEnabled)
+			{
+				Peaks = Sound_Library.BassEngine.PeakDetection(Colors.Select(x => x.Luminosity).ToList(), .01);
+				for (int i = 0; i < Peaks.Count; i++)
+					if (Peaks[i])
+						TopHSLValues.Add(new HSLColor(Colors[i].Hue, 1, Colors[i].Luminosity));
+			}
+			else
+				TopHSLValues = Colors;
+
+			AverageColor = GetAVGHSLColor(TopHSLValues, ColorCalculationMode, BrightnessCalculationMode);
 
 			//Send the color to any controllers
 			ColorOut(AverageColor);
@@ -203,12 +266,12 @@ namespace OpenLED_Host.LEDModeDrivers
 		/// <summary>
 		/// Gets the Average HSL color from a list
 		/// </summary>
-		/// <param name="Colors">List of HSL colors to average</param>
+		/// <param name="ColorIn">List of HSL colors to average</param>
 		/// <returns>An average of all the HSL colors given</returns>
-		private HSLColor GetAVGHSLColor(List<HSLColor> Colors, ColorCalculationModes color, BrightnessCalculationModes brightness)
+		private HSLColor GetAVGHSLColor(List<HSLColor> ColorIn, ColorCalculationModes color, BrightnessCalculationModes brightness)
 		{
-			HSLColor ret = new HSLColor(0.0,1,0);
-			List<HSLColor> TempColors = new List<HSLColor>(Colors);
+			HSLColor ret = new HSLColor(0.0, 1, 0);
+			List<HSLColor> TempColors = new List<HSLColor>(ColorIn);
 			if (TempColors.Count > 0)
 			{
 
@@ -245,8 +308,8 @@ namespace OpenLED_Host.LEDModeDrivers
 							break;
 						}
 				}
-				
-				switch(brightness)
+
+				switch (brightness)
 				{
 					case (BrightnessCalculationModes.Average):
 						{
@@ -255,21 +318,21 @@ namespace OpenLED_Host.LEDModeDrivers
 						}
 					case (BrightnessCalculationModes.Top10):
 						{
-							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(TempColors.Count * .1 < .5 ? 1 : TempColors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round((TempColors.Count * .1) < .5 ? 1 : TempColors.Count * .1, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
 							break;
 						}
 					case (BrightnessCalculationModes.Top25):
 						{
-							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(TempColors.Count * .25 < .5 ? 1 : TempColors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round((TempColors.Count * .25) < .5 ? 1 : TempColors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
 							break;
 						}
 					case (BrightnessCalculationModes.Top50):
 						{
-							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round(TempColors.Count * .5 < .5 ? 1 : TempColors.Count * .25, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round((TempColors.Count * .5) < .5 ? 1 : TempColors.Count * .5, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
 							break;
 						}
 				}
-				
+
 			}
 			return ret;
 		}

@@ -367,18 +367,28 @@ namespace OpenLED_Host.Controls
 		private void UpdateSpectrumShapes()
 		{
 			List<HSLColor> Colors = new List<HSLColor>(VolumeAndPitch.ColorData);
+			List<bool> Peaks = new List<bool>(VolumeAndPitch.Peaks);
 			HSLColor AverageColor = VolumeAndPitch.AverageColor;
 
 			//If nothing is playing, then don't update
 			if (AverageColor != new HSLColor(0, 0, 0) && Colors.Count > 0)
 			{
+				double NoiseFloor = Colors.Average(x => x.Luminosity);
 				for (int i = 0; i < BarCount; i++)
 				{
 					double barHeight = Colors[i].Luminosity * spectrumCanvas.RenderSize.Height;
 					
 					((Rectangle)spectrumCanvas.Children[i]).Margin = new Thickness((barWidth * i) + 1, (spectrumCanvas.RenderSize.Height - 1) - barHeight, 0, 0);
 					((Rectangle)spectrumCanvas.Children[i]).Height = barHeight;
-					
+
+					if (VolumeAndPitch.PeakDetectionEnabled && Peaks[i])
+					{
+						((Rectangle)spectrumCanvas.Children[i]).Stroke = new SolidColorBrush(Color.FromRgb(255,255,255));
+						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 1;
+					}
+					else
+						((Rectangle)spectrumCanvas.Children[i]).StrokeThickness = 0;
+
 					//Set color for the rectangles
 					System.Drawing.Color RGB = new HSLColor((double)i / BarCount, 1, Colors[i].Luminosity);
 					((Rectangle)spectrumCanvas.Children[i]).Fill = new SolidColorBrush(Color.FromRgb(RGB.R, RGB.G, RGB.B));
