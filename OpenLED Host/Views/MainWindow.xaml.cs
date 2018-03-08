@@ -30,7 +30,7 @@ namespace OpenLED_Host.Views
 		{
 			InitializeComponent();
 			
-			ni.DoubleClick +=
+			ni.Click +=
 				delegate (object sender, EventArgs args)
 				{
 					this.Show();
