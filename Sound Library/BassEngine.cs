@@ -222,8 +222,8 @@ namespace Sound_Library
 		/// <param name="ThresholdWindow">Window to search for peaks in, default of 5</param>
 		/// <param name="ThresholdThreshold">Filter correction value, default of .1</param>
 		/// <param name="ThresholdInfluence">Changes falloff of detected peak, default of .5</param>
-		/// <returns>List of values (-1, 0, 1) for peak, average, and trough</returns>
-		public static List<int> PeakDetection(List<double> y, double MinValue = 0, int ThresholdWindow = 5, double ThresholdThreshold = 0.1, double ThresholdInfluence = .5)
+		/// <returns>List of true/false for peak, and normal</returns>
+		public static List<bool> PeakDetection(List<double> y, double MinValue = 0, int ThresholdWindow = 5, double ThresholdThreshold = 0.1, double ThresholdInfluence = .5)
 		{
 			try
 			{
@@ -233,7 +233,7 @@ namespace Sound_Library
 					y.Insert(0, y[i + i - (i == 0 ? 0 : 1)]);
 
 				//set these up to the right size
-				List<int> signals = new List<int>(Enumerable.Repeat(0, y.Count));
+				List<bool> signals = new List<bool>(Enumerable.Repeat(false, y.Count));
 				List<double> FilteredY = new List<double>(Enumerable.Repeat(0.0, y.Count));
 				List<double> avgFilter = new List<double>(Enumerable.Repeat(0.0, y.Count));
 				List<double> stdFilter = new List<double>(Enumerable.Repeat(0.0, y.Count));
@@ -252,16 +252,15 @@ namespace Sound_Library
 					if (Math.Abs(y[i] - avgFilter[i - 1]) > ThresholdThreshold * stdFilter[i - 1])
 					{
 						if (y[i] > avgFilter[i - 1] && y[i] > MinValue)
-							signals[i] = 1;
-						else if (y[i] > MinValue)
-							signals[i] = -1;
+							signals[i] = true;
 						else
-							signals[i] = 0;
+							signals[i] = false;
+
 						FilteredY[i] = ThresholdInfluence * y[i] + (1 - ThresholdInfluence) * FilteredY[i - 1];
 					}
 					else
 					{
-						signals[i] = 0;
+						signals[i] = false;
 						FilteredY[i] = y[i];
 					}
 
@@ -275,14 +274,14 @@ namespace Sound_Library
 
 				//remove pad
 				for (int i = 0; i <= ThresholdWindow; i++)
-					signals.Remove(0);
+					signals.Remove(signals[i]);
 
 				return signals;
 			}
 			catch
 			{
 				//if break, return empty list
-				return new List<int>(Enumerable.Repeat(0, y.Count));
+				return new List<bool>(Enumerable.Repeat(false, y.Count));
 			}
 		}
 
@@ -293,11 +292,17 @@ namespace Sound_Library
 		/// <returns>Standard deviation of a dataset</returns>
 		private static double StandardDeviation(List<double> values)
 		{
-			double average = values.Average();
+			//This is an attempt at making the function more efficient, which is why Math.Pow() is avoided as it is slow as shit
 
-			double sumOfSquaresOfDifferences = values.Select(val => (val - average) * (val - average)).Sum();
+			double sumOfSquares = 0;
+			double sum = 0;
+			foreach (var v in values)
+			{
+				sumOfSquares += v * v;
+				sum += v;
+			}
 
-			return Math.Sqrt(sumOfSquaresOfDifferences / values.Count);
+			return Math.Sqrt((sumOfSquares / values.Count) - (sum / values.Count) * (sum / values.Count));
 		}
 
 
