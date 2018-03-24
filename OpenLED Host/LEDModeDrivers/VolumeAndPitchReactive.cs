@@ -57,10 +57,14 @@ namespace OpenLED_Host.LEDModeDrivers
 			/// <summary>
 			/// Averages top 10% of all brightnesses
 			/// </summary>
-			Top10
+			Top10,
+			/// <summary>
+			/// Max volume
+			/// </summary>
+			Max
 		}
 
-		private BrightnessCalculationModes _BrightnessCalculationMode = BrightnessCalculationModes.Top10;
+		private BrightnessCalculationModes _BrightnessCalculationMode = BrightnessCalculationModes.Max;
 		/// <summary>
 		/// Mode Brightness should be calculated in
 		/// </summary>
@@ -75,7 +79,7 @@ namespace OpenLED_Host.LEDModeDrivers
 		}
 
 
-		private int _MaximumFrequency = 5000;
+		private int _MaximumFrequency = 10000;
 		/// <summary>
 		/// Max allowed frequency, defaults to 2000
 		/// </summary>
@@ -329,6 +333,11 @@ namespace OpenLED_Host.LEDModeDrivers
 					case (BrightnessCalculationModes.Top50):
 						{
 							ret.Luminosity = TempColors.OrderByDescending(z => z.Luminosity).Take((int)Math.Round((TempColors.Count * .5) < .5 ? 1 : TempColors.Count * .5, MidpointRounding.AwayFromZero)).Average(z => z.Luminosity);
+							break;
+						}
+					case (BrightnessCalculationModes.Max):
+						{
+							ret.Luminosity = TempColors.Max(x => x.Luminosity);
 							break;
 						}
 				}

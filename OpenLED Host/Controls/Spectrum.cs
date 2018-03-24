@@ -370,6 +370,24 @@ namespace OpenLED_Host.Controls
 			List<bool> Peaks = new List<bool>(VolumeAndPitch.Peaks);
 			HSLColor AverageColor = VolumeAndPitch.AverageColor;
 
+			//This section of code will only trigger when there are more than 500 bars
+			int t = Colors.Count / 500;
+			if (t > 1)
+			{
+				List<HSLColor> ColorsTemp = new List<HSLColor>();
+				List<bool> PeaksTemp = new List<bool>();
+				for (int i = 0; i < Colors.Count - t; i += t)
+				{
+					var ColorsRange = Colors.GetRange(i, t).ToList();
+					ColorsTemp.Add(new HSLColor(ColorsRange.Average(x => x.Hue), 1, ColorsRange.Average(x => x.Luminosity)));
+					//True when more trues than falses exist
+					if (VolumeAndPitch.PeakDetectionEnabled)
+						PeaksTemp.Add(Peaks.GetRange(i, t).Count(x => x) > Peaks.GetRange(i, t).Count(x => !x));
+				}
+				Colors = new List<HSLColor>(ColorsTemp);
+				Peaks = new List<bool>(PeaksTemp);
+			}
+
 			//If nothing is playing, then don't update
 			if (AverageColor != new HSLColor(0, 0, 0) && Colors.Count > 0)
 			{
@@ -418,6 +436,11 @@ namespace OpenLED_Host.Controls
 		{
 			if(VolumeAndPitch != null)
 				BarCount = Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(VolumeAndPitch.MaximumFrequency) - Sound_Library.BassEngine.Instance.GetFFTFrequencyIndex(VolumeAndPitch.MinimumFrequency);
+
+			//This section of code will only trigger when there are more than 500 bars
+			if (BarCount / 500 > 1)
+				BarCount = 500;
+
 			if (spectrumCanvas == null || spectrumCanvas.RenderSize.IsEmpty || BarCount == 0)
 				return;
 
